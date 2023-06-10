@@ -22,6 +22,11 @@ import nltk
 # also have openpyxl
 
 # =============================================================================
+# Set init parameters
+# =============================================================================
+savefig=False
+
+# =============================================================================
 # Load the data
 # =============================================================================
 homedir=os.getcwd()
@@ -44,7 +49,7 @@ dfname=['presurvey 2021',
         'mid-year check-in 2023'];
 
 os.chdir(homedir)
-sys.exit()
+# sys.exit()
 # =============================================================================
 # Map Figure - create a map showing all the different participants
 # =============================================================================
@@ -72,7 +77,7 @@ for i,df_ in enumerate(dflist):
 
 ax.legend()
 os.chdir('/Users/as822/Library/CloudStorage/Box-Box/!Research/FLXSUS/')
-fig.savefig('Figures/Fig_map_v1.png',dpi=600);
+if savefig: fig.savefig('Figures/Fig_map_v1.png',dpi=600);
 os.chdir(homedir)
 # =============================================================================
 # Collate Race Data Across years
@@ -120,7 +125,7 @@ ax.set_xticklabels(['presurvey\n2021',
                     'postsurvey\n2022',
                     'mid-year check-in\n2023'])
 os.chdir('/Users/as822/Library/CloudStorage/Box-Box/!Research/FLXSUS/')
-fig.savefig('Figures/Fig_race_v1.png',dpi=600);
+if savefig: fig.savefig('Figures/Fig_race_v1.png',dpi=600);
 os.chdir(homedir)
 # =============================================================================
 # Collate Ethnicity Data Across years
@@ -160,7 +165,7 @@ ax.set_xticklabels(['presurvey\n2021',
                     'mid-year check-in\n2023']);
 
 os.chdir('/Users/as822/Library/CloudStorage/Box-Box/!Research/FLXSUS/')
-fig.savefig('Figures/Fig_ethnicity_v1.png',dpi=600);
+if savefig: fig.savefig('Figures/Fig_ethnicity_v1.png',dpi=600);
 os.chdir(homedir)
 
 # =============================================================================
@@ -200,7 +205,7 @@ ax.set_xticklabels(['presurvey\n2021',
                     'postsurvey\n2022',
                     'mid-year check-in\n2023']);
 os.chdir('/Users/as822/Library/CloudStorage/Box-Box/!Research/FLXSUS/')
-fig.savefig('Figures/Fig_gender_v1.png',dpi=600);
+if savefig: fig.savefig('Figures/Fig_gender_v1.png',dpi=600);
 os.chdir(homedir)
 
 # =============================================================================
@@ -241,7 +246,7 @@ ax.set_xticklabels(['presurvey\n2021',
                     'postsurvey\n2022',
                     'mid-year check-in\n2023']);
 os.chdir('/Users/as822/Library/CloudStorage/Box-Box/!Research/FLXSUS/')
-fig.savefig('Figures/Fig_SexualOrientation_v1.png',dpi=600);
+if savefig: fig.savefig('Figures/Fig_SexualOrientation_v1.png',dpi=600);
 os.chdir(homedir)
 # =============================================================================
 # Collate Income Data in 2022
@@ -266,7 +271,7 @@ s=sns.countplot(data=pre22,
              y="What is your family's approximate yearly income (in US Dolllars)?",
              order=financial_order,color=(0.00392156862745098, 0.45098039215686275, 0.6980392156862745));
 os.chdir('/Users/as822/Library/CloudStorage/Box-Box/!Research/FLXSUS/')
-fig.savefig('Figures/Fig_IncomeData.png',dpi=600);
+if savefig: fig.savefig('Figures/Fig_IncomeData.png',dpi=600);
 os.chdir(homedir)
 
 # =============================================================================
@@ -344,7 +349,7 @@ ax.set_title('FLNSUS 2021 Pre/Post Data')
 
 plt.tight_layout()
 os.chdir('/Users/as822/Library/CloudStorage/Box-Box/!Research/FLXSUS/')
-fig.savefig('Figures/Fig_Wilcoxon_2021_v1.png',dpi=600);
+if savefig: fig.savefig('Figures/Fig_Wilcoxon_2021_v1.png',dpi=600);
 os.chdir(homedir)
 # =============================================================================
 # Pre-Post 2022
@@ -421,20 +426,98 @@ ax.set_title('FLNSUS 2022 Pre/Post Data')
 
 plt.tight_layout()
 os.chdir('/Users/as822/Library/CloudStorage/Box-Box/!Research/FLXSUS/')
-fig.savefig('Figures/Fig_Wilcoxon_2022_v1.png',dpi=600);
+if savefig: fig.savefig('Figures/Fig_Wilcoxon_2022_v1.png',dpi=600);
+os.chdir(homedir)
+
+
+# =============================================================================
+# Post 2021 --> Check in 2023; check patency
+# =============================================================================
+col_perceptions=[col for col in post22 if col.startswith('Select your level of agreement for the following statements - ')]
+col_names=[i.split(' - ', 1)[1] for i in col_perceptions]
+
+df_pre=post22;
+df_post=mid23;
+
+uid_pre=set(df_pre['Unique ID']);
+uid_post=set(df_post['Unique ID']);
+
+uid_all=list(uid_pre.intersection(uid_post))
+uid_all.sort()
+
+df_pre_uid=df_pre.loc[df_pre['Unique ID'].isin(uid_all),['Unique ID']+col_perceptions];
+df_pre_uid=df_pre_uid.set_index(df_pre_uid['Unique ID']).sort_index();
+df_post_uid=df_post.loc[df_post['Unique ID'].isin(uid_all),['Unique ID']+col_perceptions];
+df_post_uid=df_post_uid.set_index(df_post_uid['Unique ID']).sort_index();
+
+df_pre_uid=df_pre_uid.replace({'Strongly agree': 5, 
+                               'Somewhat agree': 4,
+                               'Neither agree nor disagree': 3,
+                               'Somewhat disagree': 2,
+                               'Strongly disagree': 1,})
+
+df_post_uid=df_post_uid.replace({'Strongly agree': 5, 
+                               'Somewhat agree': 4,
+                               'Neither agree nor disagree': 3,
+                               'Somewhat disagree': 2,
+                               'Strongly disagree': 1,})
+
+pre, post=df_pre_uid.align(df_post_uid,join="outer",axis=None)
+
+fig, ax=plt.subplots(figsize=(12,5),ncols=1,nrows=1,);
+bonf=1;
+
+for idx,col in enumerate(col_perceptions):
+    stats=pg.wilcoxon(pre.loc[:,col],
+                      post.loc[:,col], 
+                      alternative='two-sided')
+
+    # print(col_names[idx]);
+    # print('    p-val = ',stats['p-val'].values[0])
+   
+    ax.plot(np.mean(pre.loc[:,col]),idx,'xk');
+    ax.plot([np.mean(pre.loc[:,col]),
+                     np.mean(post.loc[:,col])],[idx,idx],'-',color='k');
+    
+    if stats['p-val'][0]<0.001/bonf:
+        pcolor='red'
+    elif stats['p-val'][0]<0.01/bonf:
+        pcolor='orange'
+    elif stats['p-val'][0]<0.05/bonf:
+        pcolor='green'
+    else:
+        pcolor='grey'
+    
+    ax.plot(np.mean(post.loc[:,col]),idx,'o',color=pcolor);
+    ax.text(5.1,idx,"{0:.3f}".format(stats['p-val'][0]),
+            verticalalignment='center',color=pcolor)
+
+ax.set_yticks(np.arange(0,len(col_names)));
+ax.set_yticklabels(col_names);
+ax.set_xticks(np.arange(1,6));
+ax.set_xticklabels(['Strongly\ndisagree','Somewhat\ndisagree',
+                    'Neither agree\nnor disagree','Somewhat\nagree',
+                    'Strongly\nagree'])    
+ax.grid(axis = 'x',linewidth=0.5)
+ax.grid(axis = 'y',linewidth=0.5)        
+
+ax.set_title('FLNSUS 2022 Pre/Post Data')
+
+plt.tight_layout()
+os.chdir('/Users/as822/Library/CloudStorage/Box-Box/!Research/FLXSUS/')
+if savefig: fig.savefig('Figures/Fig_Wilcoxon_post22_mid23.png',dpi=600);
 os.chdir(homedir)
 
 # =============================================================================
 # Look at data over all years
 # =============================================================================
 
-
 uid_all=idfile['Unique ID'];
 col_idx=['FLNSUS 21 Pre',
-         'FLNSUS 21 Post',
-         'FLNSUS 22 Pre',
-         'FLNSUS 22 Post',
-         'FLXSUS 23 Midterm Jan'];
+          'FLNSUS 21 Post',
+          'FLNSUS 22 Pre',
+          'FLNSUS 22 Post',
+          'FLXSUS 23 Midterm Jan'];
 
 col_perceptions=[col for col in post21 if col.startswith('Select your level of agreement for the following statements - ')]
 # using 2021 so that have values throughout all FLNSUS surveys
@@ -470,11 +553,11 @@ for i,col in enumerate(col_perceptions):# iterate through questions
     all_years=all_years.reset_index();
     
     sns.lineplot(data=all_years,
-                 x='variable',
-                 y='value',
-                 hue='uid',
-                 legend=False,
-                 ax=ax)
+                  x='variable',
+                  y='value',
+                  hue='uid',
+                  legend=False,
+                  ax=ax)
     ax.set_yticks([1,2,3,4,5]);
     
     ax.set_yticklabels(['Strongly disagree',
@@ -519,7 +602,105 @@ for i,col in enumerate(col_perceptions):# iterate through questions
     # ax.set_ylabel("")
     # ax.set_title(col_names[i])
     
-    # fig.savefig("Figures/Perceptions("+col_names[i]+").png",dpi=600);
+    # if savefig: fig.savefig("Figures/Perceptions("+col_names[i]+").png",dpi=600);
+    
+
+# # =============================================================================
+# # Look at data over all years
+# # =============================================================================
+
+
+# uid_all=idfile['Unique ID'];
+# col_idx=['FLNSUS 21 Pre',
+#          'FLNSUS 21 Post',
+#          'FLNSUS 22 Pre',
+#          'FLNSUS 22 Post',
+#          'FLXSUS 23 Midterm Jan'];
+
+# col_perceptions=[col for col in post21 if col.startswith('Select your level of agreement for the following statements - ')]
+# # using 2021 so that have values throughout all FLNSUS surveys
+# col_names=[i.split(' - ', 1)[1] for i in col_perceptions]
+
+# for i,col in enumerate(col_perceptions):# iterate through questions
+    
+    
+
+#     df_col=pd.DataFrame(data=np.nan,index=uid_all,columns=dfname)
+    
+#     for j, uid in enumerate(uid_all):# iterate through people
+        
+#         for k, df_ in enumerate(dflist):#iterate through years/survey
+            
+#             if idfile.loc[idfile['Unique ID']==uid,col_idx[k]].values[0]:
+                
+#                 if len(df_.loc[df_['Unique ID']==uid,col].values)>0:
+#                     df_col.loc[uid,dfname[k]]=df_.loc[df_['Unique ID']==uid,col].values[0]
+    
+#     df_col=df_col.replace({'Strongly agree': 5, 
+#                     'Somewhat agree': 4,
+#                     'Neither agree nor disagree': 3,
+#                     'Somewhat disagree': 2,
+#                     'Strongly disagree': 1,})
+    
+#     ## only people at all years
+#     fig, ax=plt.subplots(figsize=(10,6))
+#     all_years=df_col
+#     # all_years=df_col.dropna()
+#     all_years=all_years.melt(ignore_index=False);
+#     all_years['uid']=all_years.index;
+#     all_years=all_years.reset_index();
+    
+#     sns.lineplot(data=all_years,
+#                  x='variable',
+#                  y='value',
+#                  hue='uid',
+#                  legend=False,
+#                  ax=ax)
+#     ax.set_yticks([1,2,3,4,5]);
+    
+#     ax.set_yticklabels(['Strongly disagree',
+#                           'Somewhat Disagree',
+#                           'Neither agree nor disagree',
+#                           'Somewhat agree',
+#                           'Strongly agree']);
+#     ax.set_xlabel("")
+#     ax.set_ylabel("")
+#     ax.set_title(col_names[i])
+    
+#     os.chdir('/Users/as822/Library/CloudStorage/Box-Box/!Research/FLXSUS/')
+#     fig.savefig("Figures/Perceptions_lineplot("+col_names[i]+").png",dpi=600);
+#     os.chdir(homedir)
+    
+#     ## One way to make a figure
+#     # df_col_melt=df_col.melt(ignore_index=True);
+    
+#     # fig, ax=plt.subplots(figsize=(10,6))
+    
+#     # sns.histplot(data=df_col_melt,
+#     #              x='variable',
+#     #              y='value',
+#     #              common_norm=True,
+#     #              cbar=True,
+#     #              ax=ax,
+#     #              bins=[0.5,1.5,2.5,3.5,4.5,5.5])
+#     # # ax.set_box_aspect(1)
+    
+#     # ax.set_xticklabels(['presurvey\n2021',
+#     #                     'postsurvey\n2021',
+#     #                     'presurvey\n2022',
+#     #                     'postsurvey\n2022',
+#     #                     'mid-year check-in\n2023']);
+    
+#     # ax.set_yticklabels(['','Strongly disagree',
+#     #                     'Somewhat Disagree',
+#     #                     'Neither agree nor disagree',
+#     #                     'Somewhat agree',
+#     #                     'Strongly agree']);
+#     # ax.set_xlabel("")
+#     # ax.set_ylabel("")
+#     # ax.set_title(col_names[i])
+    
+#     # if savefig: fig.savefig("Figures/Perceptions("+col_names[i]+").png",dpi=600);
     
     
 # =============================================================================
@@ -550,7 +731,7 @@ ax.set_yticklabels(['Strongly disagree',
 ax.set_ylabel("")
 ax.set_title("Did FLNSUS 2021 or 2022 Influence Your Career Goals?")
 os.chdir('/Users/as822/Library/CloudStorage/Box-Box/!Research/FLXSUS/')
-fig.savefig("Figures/FLNSUS_impact.png",dpi=600);
+if savefig: fig.savefig("Figures/FLNSUS_impact.png",dpi=600);
 os.chdir(homedir)
 
 # =============================================================================
@@ -574,7 +755,7 @@ sns.histplot(data=ratings,
              ax=ax)
 
 os.chdir('/Users/as822/Library/CloudStorage/Box-Box/!Research/FLXSUS/')
-fig.savefig("Figures/Fig_rating.png",dpi=600);
+if savefig: fig.savefig("Figures/Fig_rating.png",dpi=600);
 os.chdir(homedir)
 
 # =============================================================================
@@ -626,5 +807,5 @@ sns.histplot(data=mid23_temp,
              bins=np.arange(-1,1.2,0.2),ax=ax)
 
 os.chdir('/Users/as822/Library/CloudStorage/Box-Box/!Research/FLXSUS/')
-fig.savefig("Figures/Fig_sentiment.png",dpi=600);
+if savefig: fig.savefig("Figures/Fig_sentiment.png",dpi=600);
 os.chdir(homedir)
