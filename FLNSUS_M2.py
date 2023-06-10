@@ -18,7 +18,7 @@ import matplotlib.pyplot as plt
 from mpl_toolkits.basemap import Basemap
 import pingouin as pg
 import sys, os
-import nltk
+# import nltk
 # also have openpyxl
 
 # =============================================================================
@@ -507,6 +507,8 @@ plt.tight_layout()
 os.chdir('/Users/as822/Library/CloudStorage/Box-Box/!Research/FLXSUS/')
 if savefig: fig.savefig('Figures/Fig_Wilcoxon_post22_mid23.png',dpi=600);
 os.chdir(homedir)
+
+sys.exit()
 
 # =============================================================================
 # Look at data over all years
