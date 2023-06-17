@@ -1379,19 +1379,20 @@ for i,col in enumerate(col_perceptions):# iterate through questions
 
         
         stats2=pg.pairwise_tests(data=all_years,dv='value',between='variable',parametric=False)
-
+        
+        
     
         
         
         os.chdir('/Users/as822/Library/CloudStorage/Box-Box/!Research/FLXSUS/')
-        fig.savefig("Figures/Perceptions_lineplot_withstats("+col_names[i]+").png",dpi=600);
         stats2.to_csv("Figures/Perceptions_lineplot_withstats("+col_names[i]+").csv")
         print(col_names[i])
         os.chdir(homedir)
         
         # sys.exit()
-        
-        
+    os.chdir('/Users/as822/Library/CloudStorage/Box-Box/!Research/FLXSUS/')
+    fig.savefig("Figures/Perceptions_lineplot_withstats_v2("+col_names[i]+") (p_friedman = %.4f).png" % stats['p-unc'].values[0],dpi=600);
+    os.chdir(homedir)
         
     # sys.exit()
     
