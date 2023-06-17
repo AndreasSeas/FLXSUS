@@ -52,6 +52,7 @@ dfname=['presurvey 2021',
 
 os.chdir(homedir)
 
+sys.exit()
 # =============================================================================
 # Define Functions
 # =============================================================================
@@ -1300,7 +1301,109 @@ os.chdir('/Users/as822/Library/CloudStorage/Box-Box/!Research/FLXSUS/')
 if savefig: fig.savefig('Figures/Fig_Wilcoxon_post22_mid23.png',dpi=600);
 os.chdir(homedir)
 
-sys.exit()
+# =============================================================================
+# Compare across time - newest version, June 11
+# =============================================================================
+# https://stats.stackexchange.com/questions/584656/confidence-intervals-for-likert-items
+# http://rstudio-pubs-static.s3.amazonaws.com/300786_136029ae2bce4ab2a40caaef34ed62c0.html
+# https://github.com/nmalkin/plot-likert/blob/master/docs/lots_of_random_figures.ipynb
+# http://faculty.nps.edu/rdfricke/OA4109/Lecture%209-1%20--%20Introduction%20to%20Survey%20Analysis.pdf
+
+
+uid_all=idfile['Unique ID'];
+col_idx=['FLNSUS 21 Pre',
+          'FLNSUS 21 Post',
+          'FLNSUS 22 Pre',
+          'FLNSUS 22 Post',
+          'FLXSUS 23 Midterm Jan'];
+
+col_perceptions=[col for col in post21 if col.startswith('Select your level of agreement for the following statements - ')]
+# using 2021 so that have values throughout all FLNSUS surveys
+col_names=[i.split(' - ', 1)[1] for i in col_perceptions]
+
+
+for i,col in enumerate(col_perceptions):# iterate through questions
+
+    df_col=pd.DataFrame(data=np.nan,index=uid_all,columns=dfname)
+    
+    for j, uid in enumerate(uid_all):# iterate through people
+        
+        for k, df_ in enumerate(dflist):#iterate through years/survey
+            
+            if idfile.loc[idfile['Unique ID']==uid,col_idx[k]].values[0]:
+                
+                if len(df_.loc[df_['Unique ID']==uid,col].values)>0:
+                    df_col.loc[uid,dfname[k]]=df_.loc[df_['Unique ID']==uid,col].values[0]
+    
+    df_col=df_col.replace({'Strongly agree': 5, 
+                    'Somewhat agree': 4,
+                    'Neither agree nor disagree': 3,
+                    'Somewhat disagree': 2,
+                    'Strongly disagree': 1,})
+    
+    
+    # sys.exit()
+    ## only people at all years
+
+    all_years=df_col
+    # all_years=df_col.dropna()
+    all_years=all_years.melt(ignore_index=False);
+    all_years['uid']=all_years.index;
+    all_years=all_years.reset_index();
+    
+    stats=pg.friedman(data=df_col)
+    print(col_names[i])
+    print(stats)
+    
+    fig, ax=plt.subplots(figsize=(10,6))
+    
+    sns.lineplot(data=all_years,
+                  x='variable',
+                  y='value',
+                  # hue='uid',
+                  legend=False,
+                  ax=ax)
+    ax.set_yticks([1,2,3,4,5]);
+    
+    ax.set_yticklabels(['Strongly disagree',
+                          'Somewhat Disagree',
+                          'Neither agree nor disagree',
+                          'Somewhat agree',
+                          'Strongly agree']);
+    ax.set_xlabel("")
+    ax.set_ylabel("")
+    ax.set_title(col_names[i])
+    
+    
+    if stats['p-unc'].values[0] <0.05:
+
+        
+        stats2=pg.pairwise_tests(data=all_years,dv='value',between='variable',parametric=False)
+
+    
+        
+        
+        os.chdir('/Users/as822/Library/CloudStorage/Box-Box/!Research/FLXSUS/')
+        fig.savefig("Figures/Perceptions_lineplot_withstats("+col_names[i]+").png",dpi=600);
+        stats2.to_csv("Figures/Perceptions_lineplot_withstats("+col_names[i]+").csv")
+        print(col_names[i])
+        os.chdir(homedir)
+        
+        # sys.exit()
+        
+        
+        
+    # sys.exit()
+    
+    # os.chdir('/Users/as822/Library/CloudStorage/Box-Box/!Research/FLXSUS/')
+    # fig.savefig("Figures/Perceptions_lineplot_withstats("+col_names[i]+").png",dpi=600);
+    # os.chdir(homedir)
+    
+# os.chdir('/Users/as822/Library/CloudStorage/Box-Box/!Research/FLXSUS/')
+# fig.savefig("Figures/Perceptions_lineplot_average_all.png",dpi=600);
+# os.chdir(homedir)
+
+
 
 # =============================================================================
 # Compare across time
@@ -1416,13 +1519,27 @@ for i,col in enumerate(col_perceptions):# iterate through questions
                     'Somewhat disagree': 2,
                     'Strongly disagree': 1,})
     
+    stats=pg.friedman(data=df_col)
+    if stats['p-unc'].values[0] <0.05:
+
+        all_years=df_col
+        # all_years=df_col.dropna()
+        all_years=all_years.melt(ignore_index=False);
+        all_years['uid']=all_years.index;
+        all_years=all_years.reset_index();
+        
+        stats2=pg.pairwise_tests(data=all_years,dv='value',between='variable',parametric=False)
+        sys.exit()
+
+    
+
+    
+    
+    
+    sys.exit()
     ## only people at all years
     fig, ax=plt.subplots(figsize=(10,6))
-    all_years=df_col
-    # all_years=df_col.dropna()
-    all_years=all_years.melt(ignore_index=False);
-    all_years['uid']=all_years.index;
-    all_years=all_years.reset_index();
+
     
     sns.lineplot(data=all_years,
                   x='variable',
