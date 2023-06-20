@@ -20,6 +20,8 @@ import pingouin as pg
 import sys, os
 import nltk
 import tqdm
+import geopandas
+from shapely.geometry import Point
 # also have openpyxl
 
 # =============================================================================
@@ -53,10 +55,13 @@ dfname=['presurvey 2021',
 os.chdir(homedir)
 
 # =============================================================================
+# Definitions
+# =============================================================================
+
+# =============================================================================
 # map figure with 2021 v.s. 2022
 # =============================================================================
-import geopandas
-from shapely.geometry import Point
+
 # https://onelinerhub.com/python-matplotlib/how-to-fill-countries-with-colors-using-world-map
 
 world = geopandas.read_file(geopandas.datasets.get_path('naturalearth_lowres'))
