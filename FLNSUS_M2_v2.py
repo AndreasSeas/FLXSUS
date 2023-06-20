@@ -52,13 +52,49 @@ dfname=['presurvey 2021',
 
 os.chdir(homedir)
 
-sys.exit()
 # =============================================================================
-# Define Functions
+# map figure with 2021 v.s. 2022
 # =============================================================================
-# def chi2(obs1,obs2):
-     
+import geopandas
+from shapely.geometry import Point
+# https://onelinerhub.com/python-matplotlib/how-to-fill-countries-with-colors-using-world-map
 
+world = geopandas.read_file(geopandas.datasets.get_path('naturalearth_lowres'))
+# from https://www.naturalearthdata.com/downloads/110m-cultural-vectors/
+
+plt.rcParams['font.size'] = '12'
+plt.rcParams['font.family'] = 'serif'
+
+fig, ax=plt.subplots(figsize=(14,7),ncols=1,nrows=1,)
+world.plot(ax=ax,color='#CCCCCC',)
+world.boundary.plot(color=[0.5,0.5,0.5],linewidth=0.5,ax=ax,)
+
+sz=15
+alph=0.5
+ax.scatter(pre21.loc[:,'Longitude'],
+           pre21.loc[:,'Latitude'],
+           sz,
+           'red',
+           alpha=alph,
+           label='2021 Participants')
+
+ax.scatter(pre22.loc[:,'Longitude'],
+           pre22.loc[:,'Latitude'],
+           sz,
+           'blue',
+           alpha=alph,
+           label='2022 Participants')
+
+ax.legend(loc='lower center',ncol=5,bbox_to_anchor=[0.5,-0.02])
+
+plt.tight_layout()
+plt.axis('off')
+
+os.chdir('/Users/as822/Library/CloudStorage/Box-Box/!Research/FLXSUS/')
+if savefig: fig.savefig('Figures/Fig_map_21v22_v1.png',dpi=600);
+os.chdir(homedir)
+
+sys.exit()
 
 # =============================================================================
 # New map figure
@@ -152,8 +188,10 @@ plt.tight_layout()
 plt.axis('off')
 
 os.chdir('/Users/as822/Library/CloudStorage/Box-Box/!Research/FLXSUS/')
-if savefig: fig.savefig('Figures/Fig_map_v2.png',dpi=600);
+if savefig: fig.savefig('Figures/Fig_map_v3.png',dpi=600);
 os.chdir(homedir)
+
+sys.exit()
 
 # # =============================================================================
 # # Collate Race Data Across years
