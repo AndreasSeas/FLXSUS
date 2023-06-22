@@ -22,13 +22,27 @@ import nltk
 import tqdm
 import geopandas
 from shapely.geometry import Point
+import flxsus_module as flxmod
 # also have openpyxl
 
 # =============================================================================
-# Set init parameters
+# Set init parameters and organize graphics
 # =============================================================================
 savefig=True
 deprecate = False
+
+plt.rcParams['font.size'] = '12'
+plt.rcParams['font.family'] = 'serif'
+
+# colorblind tool
+# https://davidmathlogic.com/colorblind/#%23D81B60-%231E88E5-%23FFC107-%23004D40
+palette_wong = ["#000000",
+                "#E69F00",
+                "#56B4E9",
+                "#009E73",
+                "#0072B2",
+                "#D55E00",
+                "#CC79A7"];
 
 # =============================================================================
 # Load the data
@@ -53,6 +67,247 @@ dfname=['presurvey 2021',
         'mid-year check-in 2023'];
 
 os.chdir(homedir)
+
+# # =============================================================================
+# # map figure with 2021 v.s. 2022
+# # =============================================================================
+# fig,ax=flxmod.map2yrs_1panel(df1 = pre21,
+#                   df2 = pre22, 
+#                   label1 = 'FLNSUS 2021', 
+#                   label2 = 'FLNSUS 2022', 
+#                   figsize = (14,7),
+#                   markersize = 60,
+#                   marker1='o',
+#                   marker2='x',
+#                   alpha1 = 0.8,
+#                   alpha2 = 0.5,
+#                   linewidth1=1.5,
+#                   linewidth2=1.5,
+#                   color1=palette_wong[6],
+#                   color2=palette_wong[4],
+#                   facecolor1='none',
+#                   facecolor2=palette_wong[4],)
+
+# # fig,ax=flxmod.map2yrs_panels(df1 = pre21,
+# #                   df2 = pre22, 
+# #                   label1 = 'FLNSUS 2021', 
+# #                   label2 = 'FLNSUS 2022', 
+# #                   figsize = (14,7),
+# #                   markersize = 60,
+# #                   marker1='o',
+# #                   marker2='x',
+# #                   alpha1 = 0.8,
+# #                   alpha2 = 0.5,
+# #                   linewidth1=1.5,
+# #                   linewidth2=1.5,
+# #                   color1=palette_wong[6],
+# #                   color2=palette_wong[4],
+# #                   facecolor1='none',
+# #                   facecolor2=palette_wong[4],)
+
+# os.chdir('/Users/as822/Library/CloudStorage/Box-Box/!Research/FLXSUS/')
+# if savefig: fig.savefig('Final_Figures/F1_map_21v22_v3.jpeg',dpi=600);
+# os.chdir(homedir)
+
+# =============================================================================
+# make race and gender distribution figure
+# =============================================================================
+race_summary=pd.read_csv('Race_Summary.csv');
+gender_summary=pd.read_csv('Gender_Summary.csv');
+race_summary['Percent of Total']=race_summary['PCT']*100
+
+fig, ax=plt.subplots(figsize=(10,10),ncols=1,nrows=2,
+                     gridspec_kw={'height_ratios': [3, 1]})
+# https://stackoverflow.com/questions/10388462/matplotlib-different-size-subplots
+s=sns.barplot(data=race_summary,y='Race/Ethnicity',x='Percent of Total',
+            hue='Source',palette=palette_wong,
+            hue_order=['ACGME 2022',
+                       # 'FLNSUS 21 Pre', 
+                       'FLNSUS 21 Post', 
+                       # 'FLNSUS 22 Pre',
+                       'FLNSUS 22 Post', 
+                       'FLNSUS 23 Midterm Jan',],ax=ax[0])
+
+sns.move_legend(s,"upper right", bbox_to_anchor=(1, 0.5),title=None)
+
+gender_summary['Percent of Total']=gender_summary['PCT']*100
+
+sns.barplot(data=gender_summary,y='Gender',x='Percent of Total',
+            hue='Source',palette=palette_wong,
+            hue_order=['ACGME 2022',
+                       # 'FLNSUS 21 Pre', 
+                       'FLNSUS 21 Post', 
+                       # 'FLNSUS 22 Pre',
+                       'FLNSUS 22 Post', 
+                       'FLNSUS 23 Midterm Jan',],ax=ax[1])
+ax[1].legend_.remove()
+plt.tight_layout()
+
+os.chdir('/Users/as822/Library/CloudStorage/Box-Box/!Research/FLXSUS/')
+if savefig: fig.savefig('Final_Figures/F2_barplots_v2_post_only.jpeg',dpi=600);
+os.chdir(homedir)
+sys.exit()
+# =============================================================================
+# Pre-Post 2022
+# =============================================================================
+col_perceptions=[col for col in post21 if col.startswith('Select your level of agreement for the following statements - ')]
+col_names=[i.split(' - ', 1)[1] for i in col_perceptions]
+
+col_order=['I will get into medical school',
+           'I will become a doctor',
+           'I can become a neurosurgeon',
+           'I have the ability to shadow neurosurgical procedures',
+           'I am familiar with the career pathway to become a neurosurgeon',
+           'I have the institutional support and resources to become a neurosurgeon',
+           'I am connected to mentors that can help me become a neurosurgeon',
+           'I know the day-to-day responsibilities of a neurosurgeon',
+           'I can list at least three subspecialties of neurosurgery',
+           'Neurosurgery is a good field for minorities and women',
+           'I have seen or met a Woman neurosurgeon',
+           'I have seen or met a Black neurosurgeon',
+           'I have seen or met a Latinx neurosurgeon',
+           'Neurosurgeons are intimidating',
+           'Neurosurgeons have a good work-life balance',
+           'Neurosurgeons have reasonable work hours',
+           "Neurosurgeons improve their patients' quality of life"];
+
+
+df_pre=pre22;
+df_post=post22;
+
+uid_pre=set(df_pre['Unique ID']);
+uid_post=set(df_post['Unique ID']);
+
+uid_all=list(uid_pre.intersection(uid_post))
+uid_all.sort()
+
+df_pre_uid=df_pre.loc[df_pre['Unique ID'].isin(uid_all),['Unique ID']+col_perceptions];
+df_pre_uid=df_pre_uid.set_index(df_pre_uid['Unique ID']).sort_index();
+df_post_uid=df_post.loc[df_post['Unique ID'].isin(uid_all),['Unique ID']+col_perceptions];
+df_post_uid=df_post_uid.set_index(df_post_uid['Unique ID']).sort_index();
+
+df_pre_uid=df_pre_uid.replace({'Strongly agree': 5, 
+                               'Somewhat agree': 4,
+                               'Neither agree nor disagree': 3,
+                               'Somewhat disagree': 2,
+                               'Strongly disagree': 1,})
+
+df_post_uid=df_post_uid.replace({'Strongly agree': 5, 
+                               'Somewhat agree': 4,
+                               'Neither agree nor disagree': 3,
+                               'Somewhat disagree': 2,
+                               'Strongly disagree': 1,})
+
+pre, post=df_pre_uid.align(df_post_uid,join="outer",axis=None)
+
+fig, ax=plt.subplots(figsize=(12,5),ncols=1,nrows=1,);
+bonf=1;
+
+for idx,col in enumerate(col_perceptions):
+    stats=pg.wilcoxon(pre.loc[:,col],
+                      post.loc[:,col], 
+                      alternative='two-sided')
+
+    # print(col_names[idx]);
+    # print('    p-val = ',stats['p-val'].values[0])
+   
+    ax.plot(np.mean(pre.loc[:,col]),idx,'xk');
+    ax.plot([np.mean(pre.loc[:,col]),
+                     np.mean(post.loc[:,col])],[idx,idx],'-',color='k');
+    
+    if stats['p-val'][0]<0.001/bonf:
+        pcolor='red'
+    elif stats['p-val'][0]<0.01/bonf:
+        pcolor='orange'
+    elif stats['p-val'][0]<0.05/bonf:
+        pcolor='green'
+    else:
+        pcolor='grey'
+    
+    ax.plot(np.mean(post.loc[:,col]),idx,'o',color=pcolor);
+    ax.text(5.1,idx,"{0:.3f}".format(stats['p-val'][0]),
+            verticalalignment='center',color=pcolor)
+
+ax.set_yticks(np.arange(0,len(col_names)));
+ax.set_yticklabels(col_names);
+ax.set_xticks(np.arange(1,6));
+ax.set_xticklabels(['Strongly\ndisagree','Somewhat\ndisagree',
+                    'Neither agree\nnor disagree','Somewhat\nagree',
+                    'Strongly\nagree'])    
+ax.grid(axis = 'x',linewidth=0.5)
+ax.grid(axis = 'y',linewidth=0.5)        
+
+ax.set_title('FLNSUS 2022 Pre/Post Data')
+
+plt.tight_layout()
+os.chdir('/Users/as822/Library/CloudStorage/Box-Box/!Research/FLXSUS/')
+if savefig: fig.savefig('Final_Figures/Fig_Wilcoxon_2022_v1.jpeg',dpi=600);
+os.chdir(homedir)
+
+
+# =============================================================================
+# Academic Staging
+# =============================================================================
+
+academic_stages=['high school freshman',
+                 'high school sophomore',
+                 'high school junior',
+                 'high school senior',
+                 'college freshman',
+                 'college sophomore',
+                 'college junior',
+                 'college senior',
+                 'college graduate/post-baccalaureate',
+                 'graduate student',
+                 'medical student'];
+
+df_ac=pd.read_csv('AcademicStages.csv');
+
+adj=pd.DataFrame(data=0,index=academic_stages,columns=academic_stages);
+
+for i in range(len(df_ac)):
+    adj.loc[df_ac.loc[i,'Init'],df_ac.loc[i,'End']]+=1
+
+fig, ax=plt.subplots(figsize=(10,5),ncols=1,nrows=1,layout='constrained');
+# fig,ax=plt.subplots()
+for y in np.arange(0,len(academic_stages)):
+    ax.text(x=-0.05,y=y,s=academic_stages[y],horizontalalignment='right',verticalalignment='center');
+    ax.plot(0,y,'ok')
+    ax.text(x=1.05,y=y,s=academic_stages[y],horizontalalignment='left',verticalalignment='center');
+    ax.plot(1,y,'ok')
+    
+ax.text(x=-0.05,y=y+1,s='Before FLNSUS',horizontalalignment='right',verticalalignment='center',fontweight='bold');
+ax.text(x=1.05,y=y+1,s='After FLNSUS',horizontalalignment='left',verticalalignment='center',fontweight='bold');
+
+from matplotlib import cm
+
+denom=adj.max().max();
+
+cmap = cm.get_cmap('Blues')
+
+for i in range(len(academic_stages)):
+    for j in range(len(academic_stages)):
+        if adj.iloc[i,j]>0:
+            # ax.quiver(0,i,1,j-i,)
+            ax.arrow(0,i,1,j-i,length_includes_head=True,color=cmap(adj.iloc[i,j]/denom))
+
+ax.set_ylim(-2.5,12)
+
+# plt.tight_layout()
+plt.axis('off')
+
+sm = plt.cm.ScalarMappable(cmap=cmap, norm=plt.Normalize(vmin=0, vmax=denom))
+cax = plt.axes([0.3, 0.1, 0.4, 0.05])
+plt.colorbar(sm,orientation='horizontal',cax=cax,label='number of students')
+
+# fig.tight_layout()
+
+os.chdir('/Users/as822/Library/CloudStorage/Box-Box/!Research/FLXSUS/')
+if savefig: fig.savefig('Final_Figures/Fig_AcademicStage_v1.jpeg',dpi=600);
+os.chdir(homedir)
+
+
+sys.exit()
 
 # =============================================================================
 # map figure with 2021 v.s. 2022
@@ -92,10 +347,101 @@ plt.tight_layout()
 plt.axis('off')
 
 os.chdir('/Users/as822/Library/CloudStorage/Box-Box/!Research/FLXSUS/')
-if savefig: fig.savefig('Figures/Fig_map_21v22_v1.png',dpi=600);
+# if savefig: fig.savefig('Final_Figures/F1_map_21v22_v1.png',dpi=600);
 os.chdir(homedir)
 
+# =============================================================================
+# make new figure to compare with JAMA paper
+# =============================================================================
+# https://jamanetwork.com/journals/jama/fullarticle/2796404
+# raw data: 
+# https://www.aamc.org/data-reports/students-residents/report/report-residents
+
+# df_gender=pd.read_excel('Gender_Cross.xlsx')
+# df_race=pd.read_excel('Race_Ethnicity_Cross.xlsx')
+
+
+# df_race = df_race.loc[df_race.iloc[:,0]=="S_Neurosurgery",:]
+# df_gender = df_gender.loc[df_gender.iloc[:,0]=="S_Neurosurgery",:]
+
+
+
+
+# sys.exit()
+
+col_race=[col for col in idfile if col.startswith('Race')]
+df_race=pd.DataFrame(data=None,index=dfname, columns=col_race)
+df_race_pct=pd.DataFrame(data=None,index=dfname, columns=col_race)
+
+
+for i,df_ in enumerate(dflist):
+    
+    uid=df_.loc[:,'Unique ID']
+    temp_i=idfile.loc[:,'Unique ID'].isin(uid)
+    numpt=len(uid)
+    
+    temp_df=idfile.loc[temp_i,:]
+    
+    # remove multiracial from other categories
+    for col in col_race[:-1]:
+        temp_df.loc[temp_df['Race - Multiracial']==True,col]=False
+    
+    # mark empty race columns as "Other"
+    for row in temp_df.index:
+        if temp_df.loc[row,col_race].sum()==0:
+            temp_df.loc[row,'Race - Prefer not to answer']=True
+        # temp_df.loc[temp_df['Race - Multiracial']==True,col]=False
+    
+    # temp_i=idfile.loc[:,'Unique ID'].isin(uid)
+    
+    for j,col in enumerate(col_race):
+        
+        df_race.iloc[i,j]=(idfile.loc[temp_i,col]==True).sum()
+        df_race_pct.iloc[i,j]=(temp_df.loc[:,col]==True).sum()/numpt*100
+    print(numpt)
+df_race.T.to_csv('race.csv');
+
 sys.exit()
+
+df_race_pct.insert(0, 'survey', 0)
+df_race_pct.loc[:,'survey']=df_race_pct.index;
+df_race_melt=df_race_pct.melt(id_vars='survey');
+df_race_melt['variable']=df_race_melt['variable'].str.replace('Race - ','')
+
+
+fig,ax = plt.subplots(figsize=(10,6))
+s=sns.histplot(data=df_race_melt,
+               x='survey',
+               weights='value',
+               hue='variable',
+               multiple='stack',
+               ax=ax,
+               palette='colorblind')
+
+sns.move_legend(s, 
+                "lower center", 
+                bbox_to_anchor=(0.5,1),
+                ncol=3,
+                title=None)
+
+ax.set_ylabel('Percent By Survey')
+ax.set_xlabel('')
+ax.set_xticklabels(['presurvey\n2021',
+                    'postsurvey\n2021',
+                    'presurvey\n2022',
+                    'postsurvey\n2022',
+                    'mid-year check-in\n2023'])
+plt.tight_layout()
+os.chdir('/Users/as822/Library/CloudStorage/Box-Box/!Research/FLXSUS/')
+# if savefig: fig.savefig('Figures/Fig_race_v2.png',dpi=600);
+os.chdir(homedir)
+
+
+
+
+sys.exit()
+
+
 
 # =============================================================================
 # New map figure
