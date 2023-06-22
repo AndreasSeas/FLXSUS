@@ -24,7 +24,7 @@ import geopandas
 from shapely.geometry import Point
 import flxsus_module as flxmod
 # also have openpyxl
-
+sys.exit()
 # =============================================================================
 # Set init parameters and organize graphics
 # =============================================================================
