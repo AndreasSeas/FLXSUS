@@ -153,23 +153,23 @@ sys.exit()
 col_perceptions=[col for col in post21 if col.startswith('Select your level of agreement for the following statements - ')]
 col_names=[i.split(' - ', 1)[1] for i in col_perceptions]
 
-col_order=['I will get into medical school',
-           'I will become a doctor',
-           'I can become a neurosurgeon',
-           'I have the ability to shadow neurosurgical procedures',
-           'I am familiar with the career pathway to become a neurosurgeon',
-           'I have the institutional support and resources to become a neurosurgeon',
-           'I am connected to mentors that can help me become a neurosurgeon',
-           'I know the day-to-day responsibilities of a neurosurgeon',
-           'I can list at least three subspecialties of neurosurgery',
-           'Neurosurgery is a good field for minorities and women',
-           'I have seen or met a Woman neurosurgeon',
-           'I have seen or met a Black neurosurgeon',
-           'I have seen or met a Latinx neurosurgeon',
-           'Neurosurgeons are intimidating',
-           'Neurosurgeons have a good work-life balance',
-           'Neurosurgeons have reasonable work hours',
-           "Neurosurgeons improve their patients' quality of life"];
+# col_order=['I will get into medical school',
+#            'I will become a doctor',
+#            'I can become a neurosurgeon',
+#            'I have the ability to shadow neurosurgical procedures',
+#            'I am familiar with the career pathway to become a neurosurgeon',
+#            'I have the institutional support and resources to become a neurosurgeon',
+#            'I am connected to mentors that can help me become a neurosurgeon',
+#            'I know the day-to-day responsibilities of a neurosurgeon',
+#            'I can list at least three subspecialties of neurosurgery',
+#            'Neurosurgery is a good field for minorities and women',
+#            'I have seen or met a Woman neurosurgeon',
+#            'I have seen or met a Black neurosurgeon',
+#            'I have seen or met a Latinx neurosurgeon',
+#            'Neurosurgeons are intimidating',
+#            'Neurosurgeons have a good work-life balance',
+#            'Neurosurgeons have reasonable work hours',
+#            "Neurosurgeons improve their patients' quality of life"];
 
 
 df_pre=pre22;
@@ -200,8 +200,10 @@ df_post_uid=df_post_uid.replace({'Strongly agree': 5,
 
 pre, post=df_pre_uid.align(df_post_uid,join="outer",axis=None)
 
-fig, ax=plt.subplots(figsize=(12,5),ncols=1,nrows=1,);
+fig, ax=plt.subplots(figsize=(8,5),ncols=1,nrows=1,);
 bonf=1;
+
+# ax.set_yticks(np.arange(0,len(col_names)));
 
 for idx,col in enumerate(col_perceptions):
     stats=pg.wilcoxon(pre.loc[:,col],
@@ -218,18 +220,28 @@ for idx,col in enumerate(col_perceptions):
     if stats['p-val'][0]<0.001/bonf:
         pcolor='red'
     elif stats['p-val'][0]<0.01/bonf:
-        pcolor='orange'
+        pcolor='#ff781f'
     elif stats['p-val'][0]<0.05/bonf:
         pcolor='green'
     else:
         pcolor='grey'
     
     ax.plot(np.mean(post.loc[:,col]),idx,'o',color=pcolor);
+    
+    
     ax.text(5.1,idx,"{0:.3f}".format(stats['p-val'][0]),
             verticalalignment='center',color=pcolor)
+    
+    if 13<idx<16 or 1<idx<4:
+        ax.text(0.9,idx,col_names[idx],
+                verticalalignment='center',horizontalalignment='right',color='black',fontweight='bold');
+    else:
+        ax.text(0.9,idx,col_names[idx],
+                verticalalignment='center',horizontalalignment='right',color='black');
 
-ax.set_yticks(np.arange(0,len(col_names)));
-ax.set_yticklabels(col_names);
+
+ax.set_yticks(np.arange(0,len(col_names)),labels=[''] * len(col_names));
+# ax.set_yticklabels(col_names,fontweight='bold');
 ax.set_xticks(np.arange(1,6));
 ax.set_xticklabels(['Strongly\ndisagree','Somewhat\ndisagree',
                     'Neither agree\nnor disagree','Somewhat\nagree',
@@ -237,11 +249,23 @@ ax.set_xticklabels(['Strongly\ndisagree','Somewhat\ndisagree',
 ax.grid(axis = 'x',linewidth=0.5)
 ax.grid(axis = 'y',linewidth=0.5)        
 
+# ax.set_yticklabels
+
+# now set specific ylabels as bold based on change from 2021
+# labs=ax.get_yticklabels(0);
+# import matplotlib.text as txt
+# labs[15]=txt.Text(0, 15, 'Neurosurgeons have reasonable work hours',fontweight='bold')
+# labs[14]=txt.Text(0, 14, 'Neurosurgeons have a good work-life balance',fontweight='bold')
+
 ax.set_title('FLNSUS 2022 Pre/Post Data')
 
-plt.tight_layout()
+
+# plt.tight_layout()
+# 
+# sys.exit()
+
 os.chdir('/Users/as822/Library/CloudStorage/Box-Box/!Research/FLXSUS/')
-if savefig: fig.savefig('Final_Figures/Fig_Wilcoxon_2022_v1.jpeg',dpi=600);
+if savefig: fig.savefig('Final_Figures/Fig_Wilcoxon_2022_v2_bolded.jpeg',dpi=600,bbox_inches='tight');
 os.chdir(homedir)
 
 
