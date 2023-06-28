@@ -24,7 +24,7 @@ import geopandas
 from shapely.geometry import Point
 import flxsus_module as flxmod
 # also have openpyxl
-sys.exit()
+# sys.exit()
 # =============================================================================
 # Set init parameters and organize graphics
 # =============================================================================
@@ -121,7 +121,7 @@ fig, ax=plt.subplots(figsize=(10,10),ncols=1,nrows=2,
 # https://stackoverflow.com/questions/10388462/matplotlib-different-size-subplots
 s=sns.barplot(data=race_summary,y='Race/Ethnicity',x='Percent of Total',
             hue='Source',palette=palette_wong,
-            hue_order=['ACGME 2022',
+            hue_order=['AAMC 2022',
                        # 'FLNSUS 21 Pre', 
                        'FLNSUS 21 Post', 
                        # 'FLNSUS 22 Pre',
@@ -134,7 +134,7 @@ gender_summary['Percent of Total']=gender_summary['PCT']*100
 
 sns.barplot(data=gender_summary,y='Gender',x='Percent of Total',
             hue='Source',palette=palette_wong,
-            hue_order=['ACGME 2022',
+            hue_order=['AAMC 2022',
                        # 'FLNSUS 21 Pre', 
                        'FLNSUS 21 Post', 
                        # 'FLNSUS 22 Pre',
@@ -144,7 +144,7 @@ ax[1].legend_.remove()
 plt.tight_layout()
 
 os.chdir('/Users/as822/Library/CloudStorage/Box-Box/!Research/FLXSUS/')
-if savefig: fig.savefig('Final_Figures/F2_barplots_v2_post_only.jpeg',dpi=600);
+if savefig: fig.savefig('Final_Figures/F2_barplots_v3_post_only.jpeg',dpi=600);
 os.chdir(homedir)
 sys.exit()
 # =============================================================================
