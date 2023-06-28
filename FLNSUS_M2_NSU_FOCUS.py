@@ -67,7 +67,7 @@ dfname=['presurvey 2021',
         'mid-year check-in 2023'];
 
 os.chdir(homedir)
-
+sys.exit()
 # # =============================================================================
 # # map figure with 2021 v.s. 2022
 # # =============================================================================
@@ -273,62 +273,83 @@ os.chdir(homedir)
 # Academic Staging
 # =============================================================================
 
-academic_stages=['high school freshman',
-                 'high school sophomore',
-                 'high school junior',
-                 'high school senior',
-                 'college freshman',
-                 'college sophomore',
-                 'college junior',
-                 'college senior',
-                 'college graduate/post-baccalaureate',
-                 'graduate student',
-                 'medical student'];
+# academic_stages=['high school freshman',
+#                  'high school sophomore',
+#                  'high school junior',
+#                  'high school senior',
+#                  'college freshman',
+#                  'college sophomore',
+#                  'college junior',
+#                  'college senior',
+#                  'college graduate/post-baccalaureate',
+#                  'graduate student',
+#                  'medical student'];
+academic_stages=['college senior',
+                  'college graduate/post-baccalaureate',
+                  'graduate student',
+                  'medical student'];
 
 df_ac=pd.read_csv('AcademicStages.csv');
+
+df_ac=df_ac.loc[df_ac.loc[:,"Init"].isin(academic_stages),:]
+df_ac=df_ac.reset_index();
 
 adj=pd.DataFrame(data=0,index=academic_stages,columns=academic_stages);
 
 for i in range(len(df_ac)):
     adj.loc[df_ac.loc[i,'Init'],df_ac.loc[i,'End']]+=1
 
-fig, ax=plt.subplots(figsize=(10,5),ncols=1,nrows=1,layout='constrained');
-# fig,ax=plt.subplots()
-for y in np.arange(0,len(academic_stages)):
-    ax.text(x=-0.05,y=y,s=academic_stages[y],horizontalalignment='right',verticalalignment='center');
-    ax.plot(0,y,'ok')
-    ax.text(x=1.05,y=y,s=academic_stages[y],horizontalalignment='left',verticalalignment='center');
-    ax.plot(1,y,'ok')
+labs=['college senior', 'college graduate','graduate student','medical student']
+
+fig, ax=plt.subplots(figsize=(6,5),ncols=1,nrows=1,layout='constrained');
+sns.heatmap(adj,ax=ax,annot=True,xticklabels=labs,yticklabels=labs,
+            cmap='Blues',vmin=0,vmax=14,cbar=False);
+ax.xaxis.tick_top() # x axis on top
+ax.xaxis.set_label_position('top')
+ax.set_xticks(np.arange(4)+0.5,ax.get_xticklabels(),rotation=45,horizontalalignment='left')
+ax.set_xlabel('Post',fontweight='bold',fontsize=16)
+ax.set_ylabel('Pre',fontweight='bold',fontsize=16)
+
+os.chdir('/Users/as822/Library/CloudStorage/Box-Box/!Research/FLXSUS/')
+if savefig: fig.savefig('Final_Figures/Fig_AcademicStage_v2_heatmap.jpeg',dpi=600);
+os.chdir(homedir)
+
+# fig, ax=plt.subplots(figsize=(10,5),ncols=1,nrows=1,layout='constrained');
+# # fig,ax=plt.subplots()
+# for y in np.arange(0,len(academic_stages)):
+#     ax.text(x=-0.05,y=y,s=academic_stages[y],horizontalalignment='right',verticalalignment='center');
+#     ax.plot(0,y,'ok')
+#     ax.text(x=1.05,y=y,s=academic_stages[y],horizontalalignment='left',verticalalignment='center');
+#     ax.plot(1,y,'ok')
     
-ax.text(x=-0.05,y=y+1,s='Before FLNSUS',horizontalalignment='right',verticalalignment='center',fontweight='bold');
-ax.text(x=1.05,y=y+1,s='After FLNSUS',horizontalalignment='left',verticalalignment='center',fontweight='bold');
+# ax.text(x=-0.05,y=y+1,s='Before FLNSUS',horizontalalignment='right',verticalalignment='center',fontweight='bold');
+# ax.text(x=1.05,y=y+1,s='After FLNSUS',horizontalalignment='left',verticalalignment='center',fontweight='bold');
 
-from matplotlib import cm
+# from matplotlib import cm
 
-denom=adj.max().max();
+# denom=adj.max().max();
 
-cmap = cm.get_cmap('Blues')
+# cmap = cm.get_cmap('Blues')
 
-for i in range(len(academic_stages)):
-    for j in range(len(academic_stages)):
-        if adj.iloc[i,j]>0:
-            # ax.quiver(0,i,1,j-i,)
-            ax.arrow(0,i,1,j-i,length_includes_head=True,color=cmap(adj.iloc[i,j]/denom))
+# for i in range(len(academic_stages)):
+#     for j in range(len(academic_stages)):
+#         if adj.iloc[i,j]>0:
+#             # ax.quiver(0,i,1,j-i,)
+#             ax.arrow(0,i,1,j-i,length_includes_head=True,color=cmap(adj.iloc[i,j]/denom))
 
-ax.set_ylim(-2.5,12)
+# ax.set_ylim(-2.5,12)
 
-# plt.tight_layout()
-plt.axis('off')
+# # plt.tight_layout()
+# plt.axis('off')
 
-sm = plt.cm.ScalarMappable(cmap=cmap, norm=plt.Normalize(vmin=0, vmax=denom))
-cax = plt.axes([0.3, 0.1, 0.4, 0.05])
-plt.colorbar(sm,orientation='horizontal',cax=cax,label='number of students')
+# sm = plt.cm.ScalarMappable(cmap=cmap, norm=plt.Normalize(vmin=0, vmax=denom))
+# cax = plt.axes([0.3, 0.1, 0.4, 0.05])
+# plt.colorbar(sm,orientation='horizontal',cax=cax,label='number of students')
 
 # fig.tight_layout()
 
-os.chdir('/Users/as822/Library/CloudStorage/Box-Box/!Research/FLXSUS/')
-if savefig: fig.savefig('Final_Figures/Fig_AcademicStage_v1.jpeg',dpi=600);
-os.chdir(homedir)
+sys.exit()
+
 
 
 sys.exit()
