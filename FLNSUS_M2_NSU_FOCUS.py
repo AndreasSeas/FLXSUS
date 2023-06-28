@@ -454,8 +454,11 @@ from shapely.geometry import Point
 world = geopandas.read_file(geopandas.datasets.get_path('naturalearth_lowres'))
 # from https://www.naturalearthdata.com/downloads/110m-cultural-vectors/
 
+# dflist=pre22;
+
 all_coords=pd.DataFrame(data=None,columns=['Unique ID','Geometry']);
 for df in dflist:
+    df=pre21
     df['Geometry']=np.nan;
     for i in df.index:
         df.loc[i,'Geometry']=Point(df.loc[i,'Longitude'],df.loc[i,'Latitude'])
