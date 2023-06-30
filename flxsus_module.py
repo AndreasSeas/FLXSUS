@@ -38,7 +38,7 @@ def map2yrs(df1,df2, label1, label2,figsize,markersize,marker1,marker2,alpha1,al
     world.plot(ax=ax,color='#CCCCCC',)
     # plot boundaries between countries
     world.boundary.plot(color=[0.5,0.5,0.5],linewidth=0.5,ax=ax,)
-
+    
     # set figure metadata
     
     # ax.plot(x = df1.loc[:,'Longitude'],
@@ -140,8 +140,8 @@ def map2yrs_1panel(df1,df2, label1, label2,figsize,markersize,marker1,marker2,al
     
     NAmap.drawcoastlines(linewidth=0.5,ax=ax)
     NAmap.drawcountries(linewidth=0.25,ax=ax)
-    NAmap.fillcontinents(color='#CCCCCC',lake_color='aqua',ax=ax)
-    NAmap.drawmapboundary(fill_color='aqua',ax=ax)
+    NAmap.fillcontinents(color='#CCCCCC',lake_color='white',ax=ax)
+    NAmap.drawmapboundary(fill_color='white',ax=ax)
     
     x, y = NAmap(df1.loc[:,'Longitude'], df1.loc[:,'Latitude'])
     NAmap.scatter(x,y,edgecolors=color1,ax=ax,alpha=alpha1,marker=marker1,facecolors=facecolor1,linewidth=linewidth1,label=label1)

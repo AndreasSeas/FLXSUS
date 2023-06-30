@@ -67,7 +67,7 @@ dfname=['presurvey 2021',
         'mid-year check-in 2023'];
 
 os.chdir(homedir)
-sys.exit()
+# sys.exit()
 # =============================================================================
 # map figure with 2021 v.s. 2022
 # =============================================================================
@@ -106,9 +106,9 @@ fig,ax=flxmod.map2yrs_1panel(df1 = pre21,
 #                   facecolor2=palette_wong[4],)
 
 os.chdir('/Users/as822/Library/CloudStorage/Box-Box/!Research/FLXSUS/')
-if savefig: fig.savefig('Final_Figures/F1_map_21v22_v4.jpeg',dpi=600);
+if savefig: fig.savefig('Final_Figures/F1_map_21v22_v5.jpeg',dpi=600);
 os.chdir(homedir)
-# sys.exit()
+sys.exit()
 # =============================================================================
 # make race and gender distribution figure
 # =============================================================================
