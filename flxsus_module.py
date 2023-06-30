@@ -134,7 +134,8 @@ def map2yrs_1panel(df1,df2, label1, label2,figsize,markersize,marker1,marker2,al
     
     fig, ax=plt.subplots(figsize=figsize,ncols=1,nrows=1,)
     
-    NAmap = Basemap(projection='robin',lon_0=0,resolution='i')
+    NAmap = Basemap(projection='cyl',llcrnrlat=-90,urcrnrlat=90,\
+            llcrnrlon=-180,urcrnrlon=180,resolution='i')
     #Basemap(projection = 'ortho',lat_0=0,lon_0=-100,ax=ax,resolution='i')
     
     NAmap.drawcoastlines(linewidth=0.5,ax=ax)

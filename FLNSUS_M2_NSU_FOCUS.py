@@ -68,10 +68,27 @@ dfname=['presurvey 2021',
 
 os.chdir(homedir)
 sys.exit()
-# # =============================================================================
-# # map figure with 2021 v.s. 2022
-# # =============================================================================
-# fig,ax=flxmod.map2yrs_1panel(df1 = pre21,
+# =============================================================================
+# map figure with 2021 v.s. 2022
+# =============================================================================
+fig,ax=flxmod.map2yrs_1panel(df1 = pre21,
+                  df2 = pre22, 
+                  label1 = 'FLNSUS 2021', 
+                  label2 = 'FLNSUS 2022', 
+                  figsize = (14,7),
+                  markersize = 60,
+                  marker1='o',
+                  marker2='x',
+                  alpha1 = 0.8,
+                  alpha2 = 0.5,
+                  linewidth1=1.5,
+                  linewidth2=1.5,
+                  color1=palette_wong[6],
+                  color2=palette_wong[4],
+                  facecolor1='none',
+                  facecolor2=palette_wong[4],)
+
+# fig,ax=flxmod.map2yrs_panels(df1 = pre21,
 #                   df2 = pre22, 
 #                   label1 = 'FLNSUS 2021', 
 #                   label2 = 'FLNSUS 2022', 
@@ -88,27 +105,10 @@ sys.exit()
 #                   facecolor1='none',
 #                   facecolor2=palette_wong[4],)
 
-# # fig,ax=flxmod.map2yrs_panels(df1 = pre21,
-# #                   df2 = pre22, 
-# #                   label1 = 'FLNSUS 2021', 
-# #                   label2 = 'FLNSUS 2022', 
-# #                   figsize = (14,7),
-# #                   markersize = 60,
-# #                   marker1='o',
-# #                   marker2='x',
-# #                   alpha1 = 0.8,
-# #                   alpha2 = 0.5,
-# #                   linewidth1=1.5,
-# #                   linewidth2=1.5,
-# #                   color1=palette_wong[6],
-# #                   color2=palette_wong[4],
-# #                   facecolor1='none',
-# #                   facecolor2=palette_wong[4],)
-
-# os.chdir('/Users/as822/Library/CloudStorage/Box-Box/!Research/FLXSUS/')
-# if savefig: fig.savefig('Final_Figures/F1_map_21v22_v3.jpeg',dpi=600);
-# os.chdir(homedir)
-
+os.chdir('/Users/as822/Library/CloudStorage/Box-Box/!Research/FLXSUS/')
+if savefig: fig.savefig('Final_Figures/F1_map_21v22_v4.jpeg',dpi=600);
+os.chdir(homedir)
+# sys.exit()
 # =============================================================================
 # make race and gender distribution figure
 # =============================================================================
