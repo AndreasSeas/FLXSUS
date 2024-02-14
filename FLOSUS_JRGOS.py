@@ -30,7 +30,7 @@ from scipy.stats import chisquare
 # =============================================================================
 # Set init parameters and organize graphics
 # =============================================================================
-savefig=True
+savefig=False
 deprecate = False
 
 plt.rcParams['font.size'] = '12'
@@ -233,7 +233,7 @@ plt.tight_layout()
 os.chdir('/Users/as822/Library/CloudStorage/Box-Box/!Research/FLXSUS/')
 if savefig: fig.savefig('JRGOS_FLOSUS/post_map_2023.jpeg',dpi=400);
 os.chdir(homedir)
-sys.exit()
+
 # =============================================================================
 # Pre/Post Perceptions
 # =============================================================================
@@ -295,6 +295,781 @@ ax.set_title('FLOSUS 2023 Pre/Post Data')
 os.chdir('/Users/as822/Library/CloudStorage/Box-Box/!Research/FLXSUS/')
 if savefig: fig.savefig('JRGOS_FLOSUS/Fig_Wilcoxon_2023_FLOSUS.jpeg',dpi=400,bbox_inches='tight');
 os.chdir(homedir)
+
+# =============================================================================
+# Demographics
+# =============================================================================
+
+col_race = ['Race - Other',
+            'Race - Multiracial',
+            'Race - Prefer not to answer',
+            'Race - American Indian or Alaska Native',
+            'Race - Asian or Pacific Islander',
+            'Race - Black or African American',
+            'Race - White or Caucasian',]
+            
+names_race=[i.split(' - ', 1)[1] for i in col_race]
+
+col_ethnicity=['Ethnicity']
+names_ethnicity=["Hispanic or Latino",
+                 "Not Hispanic or Latino",
+                 "Prefer not to answer"][::-1]
+
+col_gender=['Gender']
+names_gender=["Female",
+              "Male",
+              "Non-binary",
+              "Gender neutral",
+              "Transgender",
+              "Prefer not to answer",][::-1]
+
+col_orientation=['Sexual Orientation']
+names_orientation=["Heterosexual",
+                   "Lesbian",
+                   "Bisexual",
+                   "Gay",
+                   "Queer",
+                   "Asexual",
+                   "Pansexual",
+                   "Prefer not to answer",
+                   "Other",][::-1]
+
+colset=col_race + col_ethnicity + col_gender + col_orientation
+
+def getcounts(col,names,df):
+
+    x = list()
+    for name in names:
+        x.append(df[col].squeeze().str.startswith(name).sum())
+    
+    x=np.array(x)
+    y = np.arange(len(x))
+    
+    return x,y
+    
+facecolors='#541712ff',
+
+# precolor=palette_wong[1]
+# postcolor=palette_wong[2]
+# delt=0.2
+
+u_post23=set(post23['Unique ID'])
+
+# get pre dataframe for specific symposium
+postdf=pd.DataFrame(data=None,
+                   index=u_post23,
+                   columns=colset)
+
+df_post_temp=idfile
+
+for uid in u_post23:
+    if (df_post_temp['Unique ID']==uid).sum()>0:
+        postdf.loc[uid,colset]=df_post_temp.loc[df_post_temp['Unique ID']==uid,colset].values
+
+postdf=postdf.dropna()
+
+## get vals
+# get race post
+x_race_post=postdf[col_race].sum().values
+yl_race_post=names_race
+y_race_post=np.arange(len(x_race_post))
+
+# get ethnicity post
+x_ethnicity_post,y_ethnicity_post=getcounts(col_ethnicity,names_ethnicity,postdf)
+
+# get gender post
+x_gender_post,y_gender_post=getcounts(col_gender,names_gender,postdf)
+
+# get orientation post
+x_orientation_post,y_orientation_post=getcounts(col_orientation,names_orientation,postdf)
+
+
+## plot
+fig, ax=plt.subplots(figsize=(5,12),nrows=4,ncols=1,sharex=False,
+                      gridspec_kw={'height_ratios':[7,3,6,9],
+                                   'hspace':0.3},)
+
+xmax=np.max(np.concatenate((x_race_post, 
+                            x_ethnicity_post, 
+                            x_gender_post,
+                            x_orientation_post)))*1.2
+
+## race
+axs=ax[0]
+p=axs.barh(y=y_race_post,
+         width=x_race_post,
+         height=0.8,
+         color=facecolors)
+# axs.bar_label(p, label_type='edge',padding=2)
+for i in range(len(x_race_post)):
+    axs.text(x_race_post[i]*1.01,
+             y_race_post[i],
+             "{:.1%}".format(x_race_post[i]/len(postdf)),
+             va='center',
+             ha='left')
+axs.set_yticks(y_race_post,yl_race_post)
+axs.set_title('Race')
+axs.grid(visible=True,which='major',axis='x')
+# xlimvals=axs.get_xlim()
+axs.set_xlim(0,xmax)
+axs.set_axisbelow(True)
+
+## ethnicity
+axs=ax[1]
+p=axs.barh(y=y_ethnicity_post,
+         width=x_ethnicity_post,
+         height=0.8,
+         color=facecolors)
+# axs.bar_label(p, label_type='edge',padding=2)
+for i in range(len(x_ethnicity_post)):
+    axs.text(x_ethnicity_post[i]*1.01,
+             y_ethnicity_post[i],
+             "{:.1%}".format(x_ethnicity_post[i]/len(postdf)),
+             va='center',
+             ha='left')
+axs.set_yticks(y_ethnicity_post,names_ethnicity)
+axs.set_title('Ethnicity')
+axs.grid(visible=True,which='major',axis='x')
+# xlimvals=axs.get_xlim()
+axs.set_xlim(0,xmax)
+axs.set_axisbelow(True)
+
+## gender
+# fig, axs=plt.subplots(figsize=(6,3),nrows=1,ncols=1)
+axs=ax[2]
+p=axs.barh(y=y_gender_post,
+         width=x_gender_post,
+         height=0.8,
+         color=facecolors)
+# axs.bar_label(p, label_type='edge',padding=2)
+for i in range(len(x_gender_post)):
+    axs.text(x_gender_post[i]*1.01,
+             y_gender_post[i],
+             "{:.1%}".format(x_gender_post[i]/len(postdf)),
+             va='center',
+             ha='left')
+axs.set_yticks(y_gender_post,names_gender)
+axs.set_title('Gender')
+axs.grid(visible=True,which='major',axis='x')
+# xlimvals=axs.get_xlim()
+axs.set_xlim(0,xmax)
+axs.set_axisbelow(True)
+
+
+## orientation
+axs=ax[3]
+p=axs.barh(y=y_orientation_post,
+         width=x_orientation_post,
+         height=0.8,
+         color=facecolors)
+# axs.bar_label(p, label_type='edge',padding=2)
+for i in range(len(x_orientation_post)):
+    axs.text(x_orientation_post[i]*1.01,
+             y_orientation_post[i],
+             "{:.1%}".format(x_orientation_post[i]/len(postdf)),
+             va='center',
+             ha='left')
+axs.set_yticks(y_orientation_post,names_orientation)
+axs.set_title('Sexual Orientation')
+axs.grid(visible=True,which='major',axis='x')
+# xlimvals=axs.get_xlim()
+axs.set_xlim(0,xmax)
+axs.set_axisbelow(True)
+
+os.chdir('/Users/as822/Library/CloudStorage/Box-Box/!Research/FLXSUS/')
+if savefig: fig.savefig('JRGOS_FLOSUS/prepost_demo_FLOSUS.jpeg',dpi=400,bbox_inches='tight');
+os.chdir(homedir)
+
+# =============================================================================
+# pre and post hometown size, education level, family income, academic stage
+# =============================================================================
+
+col_hometown=['Hometown']
+names_hometown=['Large City (>150,000 people)',
+       'Small City (50,000 - 150,000 people)',
+       'Suburban town (10,000 - 50,000 people)',
+       'Small town (2,500 - 10,000 people)', 
+       'Rural (< 2,500 people)'][::-1]
+
+col_highestfamedu=['What is the highest level of education someone in your immediate family (Mom/Dad/Brother/Sister) has completed?']
+names_highestfamedu=['Some high school or less',
+                     'High school diploma or GED', 
+                     'Some college, but no degree',
+                     'Associates or technical degree',
+                     'Bachelor’s degree',
+                     'Graduate or professional degree',
+                     'Prefer not to say',][::-1]
+
+col_family_income=["What is your family's approximate yearly income (in US Dolllars)?"]
+names_family_income=['Less than $10,000', 
+                     '$10,000 - $19,999', 
+                     '$20,000 - $29,999', 
+                     '$30,000 - $39,999',
+                     '$40,000 - $49,999',
+                     '$50,000 - $59,999', 
+                     '$60,000 - $69,999', 
+                     '$70,000 - $79,999',
+                     '$80,000 - $89,999',
+                     '$90,000 - $99,999',
+                     '$100,000 - $149,999',
+                     'More than $150,000',][::-1]
+
+col_academic_stage=["Academic Stage"]
+names_academic_stage=['High school freshman',
+                      'High school sophomore',
+                      'High school junior',
+                      'High school senior', 
+                      'College freshman', 
+                      'College sophomore',
+                      'College junior', 
+                      'College senior', 
+                      'College graduate/Post-baccalaureate', 
+                      'Other',][::-1]
+
+colset=col_hometown + col_highestfamedu + col_family_income + col_academic_stage
+nameset=[names_hometown,names_highestfamedu,names_family_income,names_academic_stage]
+supset=['Hometown Size','Highest Family Education','Family Income', 'Academic Stage']
+
+
+
+facecolors='#541712ff',
+
+# precolor=palette_wong[1]
+# postcolor=palette_wong[2]
+# delt=0.2
+
+u_post23=set(post23['Unique ID'])
+
+# get pre dataframe for specific symposium
+postdf=pd.DataFrame(data=None,
+                   index=u_post23,
+                   columns=colset)
+
+df_post_temp=idfile
+
+for uid in u_post23:
+    if (pre23['Unique ID']==uid).sum()>0:
+        postdf.loc[uid,colset]=pre23.loc[pre23['Unique ID']==uid,colset].values
+
+postdf=postdf.dropna()
+
+
+fig, axs=plt.subplots(figsize=(5,12),nrows=4,ncols=1,sharex=False,
+                      gridspec_kw={'height_ratios':[5,7,12,10],
+                                   'hspace':0.3},)
+
+xmax=0;
+
+for j,cols in enumerate(colset):
+    xpost,ypost=getcounts(cols,nameset[j],postdf)
+    axs[j].barh(y=ypost,
+             width=xpost,
+             height=0.8,
+             color=facecolors,)
+    for i in range(len(xpost)):
+        axs[j].text(xpost[i]*1.01,
+                 ypost[i],
+                 "{:.1%}".format(xpost[i]/len(postdf)),
+                 va='center',
+                 ha='left')
+    
+    # replce $ in string
+    name_og=nameset[j]
+    name_nu=[sub.replace("$","\$") for sub in name_og]
+    
+    axs[j].set_yticks(ypost,name_nu)
+    axs[j].set_title(supset[j])
+    axs[j].grid(visible=True,which='major',axis='x')
+    
+    axs[j].set_axisbelow(True)
+    
+    if np.max(xpost)>xmax:
+        xmax=np.max(xpost)
+
+for ax in axs:
+    ax.set_xlim(0,xmax*1.2)
+
+os.chdir('/Users/as822/Library/CloudStorage/Box-Box/!Research/FLXSUS/')
+if savefig: fig.savefig('JRGOS_FLOSUS/prepost_demo2_FLOSUS.jpeg',dpi=400,bbox_inches='tight');
+os.chdir(homedir)
+
+## ethnicity
+
+
+# axs[3].set_xlabel('% of total')
+# axs[3].set_xlim(0,100)
+
+# axs[3].legend(loc='lower center',bbox_to_anchor=(0.5,-0.5))
+
+sys.exit()
+
+for l, symp_name in enumerate(set_names[1:]):
+   
+    i=l+1
+    predf=pd.DataFrame(data=None,
+                       index=UID_pre[i],
+                       columns=colset)
+    
+    tempo=dfs_pre[i]
+    for uid in UID_pre[i]:
+        predf.loc[uid,colset]=tempo.loc[tempo['Unique ID']==uid,colset].values
+    
+    predf=predf.dropna()
+
+    # get pre dataframe for specific symposium
+    postdf=pd.DataFrame(data=None,
+                       index=UID_post[i],
+                       columns=colset)
+    
+    for uid in UID_post[i]:
+        # do this off predf dataframe
+        if (predf.index==uid).sum()>0:
+            postdf.loc[uid,colset]=predf.loc[uid,colset].values
+    
+    postdf=postdf.dropna()
+    
+    fig, axs=plt.subplots(figsize=(5,12),nrows=4,ncols=1,sharex=True,
+                          gridspec_kw={'height_ratios':[5,7,12,10]})
+    
+    for j,cols in enumerate(colset):
+        xpre,ypre=getcounts(cols,nameset[j],predf)
+        xpost,ypost=getcounts(cols,nameset[j],postdf)
+        
+        axs[j].barh(y=ypre-delt,
+                 width=xpre/len(predf)*100,
+                 height=delt*1.8,
+                 color=precolor,
+                 label='pre-survey (n={})'.format(len(predf)))
+        
+        axs[j].barh(y=ypost+delt,
+                 width=xpost/len(postdf)*100,
+                 height=delt*1.8,
+                 color=postcolor,
+                 label='post-survey (n={})'.format(len(postdf)))
+        
+        # replce $ in string
+        name_og=nameset[j]
+        name_nu=[sub.replace("$","\$") for sub in name_og]
+        
+        axs[j].set_yticks(ypost,name_nu)
+        f_obs = xpost
+        f_exp = xpre/np.sum(xpre)*np.sum(xpost)
+        f_obs=f_obs[f_exp>0]# get rid of zeros in expression
+        f_exp=f_exp[f_exp>0]
+
+        chip=chisquare(f_obs=f_obs, f_exp=f_exp)[1]
+        axs[j].set_title(supset[j]+', chi2 p = {0:.3f}'.format(chip))
+    
+    axs[3].set_xlabel('% of total')
+    axs[3].set_xlim(0,100)
+    
+    axs[3].legend(loc='lower center',bbox_to_anchor=(0.5,-0.5))
+    
+    plt.suptitle(symp_name,fontsize=20)
+    
+    os.chdir('/Users/as822/Library/CloudStorage/Box-Box/!Research/FLXSUS/')
+    if savefig: fig.savefig('AMEC24_FLNSUS_Longitudinal/prepost_other_pct_'+symp_name+'.jpeg',dpi=300,bbox_inches='tight');
+    os.chdir(homedir)
+    
+    fig, axs=plt.subplots(figsize=(5,12),nrows=4,ncols=1,sharex=True,
+                          gridspec_kw={'height_ratios':[5,7,12,10]})
+    
+    for j,cols in enumerate(colset):
+        xpre,ypre=getcounts(cols,nameset[j],predf)
+        xpost,ypost=getcounts(cols,nameset[j],postdf)
+        
+        p = axs[j].barh(y=ypre-delt,
+                 width=xpre,
+                 height=delt*1.8,
+                 color=precolor,
+                 label='pre-survey (n={})'.format(len(predf)))
+        axs[j].bar_label(p,fontsize=10)
+        p = axs[j].barh(y=ypost+delt,
+                 width=xpost,
+                 height=delt*1.8,
+                 color=postcolor,
+                 label='post-survey (n={})'.format(len(postdf)))
+        axs[j].bar_label(p,fontsize=10)
+        # replce $ in string
+        name_og=nameset[j]
+        name_nu=[sub.replace("$","\$") for sub in name_og]
+        axs[j].set_yticks(ypost,name_nu)
+        axs[j].set_title(supset[j])
+    
+    axs[3].set_xlabel('count')
+    axs[3].legend(loc='lower center',bbox_to_anchor=(0.5,-0.5))
+    
+    plt.suptitle(symp_name,fontsize=20)
+    
+    os.chdir('/Users/as822/Library/CloudStorage/Box-Box/!Research/FLXSUS/')
+    if savefig: fig.savefig('AMEC24_FLNSUS_Longitudinal/prepost_other_'+symp_name+'.jpeg',dpi=300,bbox_inches='tight');
+    os.chdir(homedir)
+
+
+
+
+# ethnicity
+axs[1].barh(y=y_ethnicity_pre-delt,
+         width=x_ethnicity_pre/len(predf)*100,
+         height=delt*1.8,
+         color=precolor)
+axs[1].barh(y=y_ethnicity_post+delt,
+         width=x_ethnicity_post/len(postdf)*100,
+         height=delt*1.8,
+         color=postcolor)
+axs[1].set_yticks(y_ethnicity_post,names_ethnicity)
+#chi2 test
+f_obs = x_ethnicity_post
+f_exp = x_ethnicity_pre/len(predf)*len(postdf)
+f_obs=f_obs[f_exp>0]# get rid of zeros in expression
+f_exp=f_exp[f_exp>0]
+
+chip=chisquare(f_obs=f_obs, f_exp=f_exp)[1]
+axs[1].set_title('Ethnicity, chi2 p = {0:.3f}'.format(chip))
+
+# gender
+axs[2].barh(y=y_gender_pre-delt,
+         width=x_gender_pre/len(predf)*100,
+         height=delt*1.8,
+         color=precolor)
+axs[2].barh(y=y_gender_post+delt,
+         width=x_gender_post/len(postdf)*100,
+         height=delt*1.8,
+         color=postcolor)
+axs[2].set_yticks(y_gender_post,names_gender)
+#chi2 test
+f_obs = x_gender_post
+f_exp = x_gender_pre/len(predf)*len(postdf)
+f_obs=f_obs[f_exp>0]# get rid of zeros in expression
+f_exp=f_exp[f_exp>0]
+
+chip=chisquare(f_obs=f_obs, f_exp=f_exp)[1]    
+axs[2].set_title('Gender, chi2 p = {0:.3f}'.format(chisquare(f_obs=f_obs, f_exp=f_exp)[1]))
+
+# orientation
+axs[3].barh(y=y_orientation_pre-delt,
+         width=x_orientation_pre/len(predf)*100,
+         height=delt*1.8,
+         color=precolor,
+         label='pre-survey (n={})'.format(len(predf)))
+axs[3].barh(y=y_orientation_post+delt,
+         width=x_orientation_post/len(postdf)*100,
+         height=delt*1.8,
+         color=postcolor,
+         label='post-survey (n={})'.format(len(postdf)))
+axs[3].set_yticks(y_orientation_post,names_orientation)
+#chi2 test
+f_obs = x_orientation_post
+f_exp = x_orientation_pre/len(predf)*len(postdf)
+f_obs=f_obs[f_exp>0]# get rid of zeros in expression
+f_exp=f_exp[f_exp>0]
+axs[3].set_title('Sexual Orientation, chi2 p = {0:.3f}'.format(chisquare(f_obs=f_obs, f_exp=f_exp)[1]))
+
+axs[3].set_xlabel('% of total')
+axs[3].set_xlim(0,100)
+
+axs[3].legend(loc='lower center',bbox_to_anchor=(0.5,-0.5))
+
+plt.suptitle(symp_name,fontsize=20)
+
+# plt.tight_layout()
+
+os.chdir('/Users/as822/Library/CloudStorage/Box-Box/!Research/FLXSUS/')
+if savefig: fig.savefig('AMEC24_FLNSUS_Longitudinal/prepost_pct_'+symp_name+'.jpeg',dpi=300,bbox_inches='tight');
+os.chdir(homedir)
+
+
+sys.exit()
+
+
+set_names=['FLNSUS 2021','FLNSUS 2022','FLNSUS 2023']
+
+UID_pre=[u_pre21,u_pre22,u_pre23]
+UID_post=[u_post21,u_post22,u_post23]
+
+dfs_pre=[pre21,pre22,pre23]
+dfs_post=[post21,post22,post23]
+
+for i, symp_name in enumerate(set_names):
+    
+    # get pre dataframe for specific symposium
+    predf=pd.DataFrame(data=None,
+                       index=UID_pre[i],
+                       columns=colset)
+    
+    tempo=dfs_pre[i]
+    for uid in UID_pre[i]:
+
+        predf.loc[uid,colset]=tempo.loc[tempo['Unique ID']==uid,colset].values
+    
+    predf=predf.dropna()
+
+    # get pre dataframe for specific symposium
+    postdf=pd.DataFrame(data=None,
+                       index=UID_post[i],
+                       columns=colset)
+    
+    df_post_temp=idfile
+    
+    
+    for uid in UID_post[i]:
+        postdf.loc[uid,colset]=df_post_temp.loc[df_post_temp['Unique ID']==uid,colset].values
+    
+    postdf=postdf.dropna()
+    
+    # get race pre
+    x_race_pre=predf[col_race].sum().values
+    yl_race_pre=names_race
+    y_race_pre=np.arange(len(x_race_pre))
+    
+    # get race post
+    x_race_post=postdf[col_race].sum().values
+    yl_race_post=names_race
+    y_race_post=np.arange(len(x_race_post))
+    
+    # get ethnicity pre   
+    x_ethnicity_pre,y_ethnicity_pre=getcounts(col_ethnicity,names_ethnicity,predf)
+    # get ethnicity post
+    x_ethnicity_post,y_ethnicity_post=getcounts(col_ethnicity,names_ethnicity,postdf)
+    
+    # get gender pre   
+    x_gender_pre,y_gender_pre=getcounts(col_gender,names_gender,predf)
+    # get gender post
+    x_gender_post,y_gender_post=getcounts(col_gender,names_gender,postdf)
+   
+    # get orientation pre   
+    x_orientation_pre,y_orientation_pre=getcounts(col_orientation,names_orientation,predf)
+    # get orientation post
+    x_orientation_post,y_orientation_post=getcounts(col_orientation,names_orientation,postdf)
+
+
+    fig, axs=plt.subplots(figsize=(5,12),nrows=4,ncols=1,sharex=True,
+                          gridspec_kw={'height_ratios':[7,3,6,9]})
+    
+    ## race
+    axs[0].barh(y=y_race_pre-delt,
+             width=x_race_pre/len(predf)*100,
+             height=delt*1.8,
+             color=precolor)
+    axs[0].barh(y=y_race_post+delt,
+             width=x_race_post/len(postdf)*100,
+             height=delt*1.8,
+             color=postcolor)
+    axs[0].set_yticks(y_race_post,yl_race_post)
+    f_obs = x_race_post
+    f_exp = x_race_pre/np.sum(x_race_pre)*np.sum(x_race_post)
+    f_obs=f_obs[f_exp>0]# get rid of zeros in expression
+    f_exp=f_exp[f_exp>0]
+
+    chip=chisquare(f_obs=f_obs, f_exp=f_exp)[1]
+    axs[0].set_title('Race, chi2 p = {0:.3f}'.format(chip))
+
+    
+    # ethnicity
+    axs[1].barh(y=y_ethnicity_pre-delt,
+             width=x_ethnicity_pre/len(predf)*100,
+             height=delt*1.8,
+             color=precolor)
+    axs[1].barh(y=y_ethnicity_post+delt,
+             width=x_ethnicity_post/len(postdf)*100,
+             height=delt*1.8,
+             color=postcolor)
+    axs[1].set_yticks(y_ethnicity_post,names_ethnicity)
+    #chi2 test
+    f_obs = x_ethnicity_post
+    f_exp = x_ethnicity_pre/len(predf)*len(postdf)
+    f_obs=f_obs[f_exp>0]# get rid of zeros in expression
+    f_exp=f_exp[f_exp>0]
+
+    chip=chisquare(f_obs=f_obs, f_exp=f_exp)[1]
+    axs[1].set_title('Ethnicity, chi2 p = {0:.3f}'.format(chip))
+    
+    # gender
+    axs[2].barh(y=y_gender_pre-delt,
+             width=x_gender_pre/len(predf)*100,
+             height=delt*1.8,
+             color=precolor)
+    axs[2].barh(y=y_gender_post+delt,
+             width=x_gender_post/len(postdf)*100,
+             height=delt*1.8,
+             color=postcolor)
+    axs[2].set_yticks(y_gender_post,names_gender)
+    #chi2 test
+    f_obs = x_gender_post
+    f_exp = x_gender_pre/len(predf)*len(postdf)
+    f_obs=f_obs[f_exp>0]# get rid of zeros in expression
+    f_exp=f_exp[f_exp>0]
+    
+    chip=chisquare(f_obs=f_obs, f_exp=f_exp)[1]    
+    axs[2].set_title('Gender, chi2 p = {0:.3f}'.format(chisquare(f_obs=f_obs, f_exp=f_exp)[1]))
+    
+    # orientation
+    axs[3].barh(y=y_orientation_pre-delt,
+             width=x_orientation_pre/len(predf)*100,
+             height=delt*1.8,
+             color=precolor,
+             label='pre-survey (n={})'.format(len(predf)))
+    axs[3].barh(y=y_orientation_post+delt,
+             width=x_orientation_post/len(postdf)*100,
+             height=delt*1.8,
+             color=postcolor,
+             label='post-survey (n={})'.format(len(postdf)))
+    axs[3].set_yticks(y_orientation_post,names_orientation)
+    #chi2 test
+    f_obs = x_orientation_post
+    f_exp = x_orientation_pre/len(predf)*len(postdf)
+    f_obs=f_obs[f_exp>0]# get rid of zeros in expression
+    f_exp=f_exp[f_exp>0]
+    axs[3].set_title('Sexual Orientation, chi2 p = {0:.3f}'.format(chisquare(f_obs=f_obs, f_exp=f_exp)[1]))
+    
+    axs[3].set_xlabel('% of total')
+    axs[3].set_xlim(0,100)
+    
+    axs[3].legend(loc='lower center',bbox_to_anchor=(0.5,-0.5))
+    
+    plt.suptitle(symp_name,fontsize=20)
+    
+    # plt.tight_layout()
+
+    os.chdir('/Users/as822/Library/CloudStorage/Box-Box/!Research/FLXSUS/')
+    if savefig: fig.savefig('AMEC24_FLNSUS_Longitudinal/prepost_pct_'+symp_name+'.jpeg',dpi=300,bbox_inches='tight');
+    os.chdir(homedir)
+
+
+for i, symp_name in enumerate(set_names):
+    # get pre dataframe for specific symposium
+    predf=pd.DataFrame(data=None,
+                       index=UID_pre[i],
+                       columns=colset)
+    
+    tempo=dfs_pre[i]
+    for uid in UID_pre[i]:
+
+        predf.loc[uid,colset]=tempo.loc[tempo['Unique ID']==uid,colset].values
+    
+    predf=predf.dropna()
+
+    # get pre dataframe for specific symposium
+    postdf=pd.DataFrame(data=None,
+                       index=UID_post[i],
+                       columns=colset)
+    
+    df_post_temp=idfile
+    
+    
+    for uid in UID_post[i]:
+        postdf.loc[uid,colset]=df_post_temp.loc[df_post_temp['Unique ID']==uid,colset].values
+    
+    postdf=postdf.dropna()
+    
+    
+    # get race pre
+    x_race_pre=predf[col_race].sum().values
+    yl_race_pre=names_race
+    y_race_pre=np.arange(len(x_race_pre))
+    
+    # get race post
+    x_race_post=postdf[col_race].sum().values
+    yl_race_post=names_race
+    y_race_post=np.arange(len(x_race_post))
+    
+    # get ethnicity pre   
+    x_ethnicity_pre,y_ethnicity_pre=getcounts(col_ethnicity,names_ethnicity,predf)
+    # get ethnicity post
+    x_ethnicity_post,y_ethnicity_post=getcounts(col_ethnicity,names_ethnicity,postdf)
+    
+    # get gender pre   
+    x_gender_pre,y_gender_pre=getcounts(col_gender,names_gender,predf)
+    # get gender post
+    x_gender_post,y_gender_post=getcounts(col_gender,names_gender,postdf)
+   
+    # get orientation pre   
+    x_orientation_pre,y_orientation_pre=getcounts(col_orientation,names_orientation,predf)
+    # get orientation post
+    x_orientation_post,y_orientation_post=getcounts(col_orientation,names_orientation,postdf)
+
+
+    fig, axs=plt.subplots(figsize=(5,12),nrows=4,ncols=1,sharex=True,
+                          gridspec_kw={'height_ratios':[7,3,6,9]})
+    
+    # race
+    p=axs[0].barh(y=y_race_pre-delt,
+             width=x_race_pre,
+             height=delt*1.8,
+             color=precolor)
+    axs[0].bar_label(p,fontsize=10)
+    p=axs[0].barh(y=y_race_post+delt,
+             width=x_race_post,
+             height=delt*1.8,
+             color=postcolor)
+    axs[0].bar_label(p,fontsize=10)
+    axs[0].set_yticks(y_race_post,yl_race_post)
+    axs[0].set_title('Race')
+    axs[0].legend(loc='lower right')
+    
+    # ethnicity
+    p=axs[1].barh(y=y_ethnicity_pre-delt,
+             width=x_ethnicity_pre,
+             height=delt*1.8,
+             color=precolor)
+    axs[1].bar_label(p,fontsize=10)
+    p=axs[1].barh(y=y_ethnicity_post+delt,
+             width=x_ethnicity_post,
+             height=delt*1.8,
+             color=postcolor)
+    axs[1].bar_label(p,fontsize=10)
+    axs[1].set_yticks(y_ethnicity_post,names_ethnicity)
+    axs[1].set_title('Ethnicity')
+    
+    # gender
+    p=axs[2].barh(y=y_gender_pre-delt,
+             width=x_gender_pre,
+             height=delt*1.8,
+             color=precolor)
+    axs[2].bar_label(p,fontsize=10)
+    p=axs[2].barh(y=y_gender_post+delt,
+             width=x_gender_post,
+             height=delt*1.8,
+             color=postcolor)
+    axs[2].bar_label(p,fontsize=10)
+    axs[2].set_yticks(y_gender_post,names_gender)
+    axs[2].set_title('Gender')
+    
+    # gender
+    p=axs[3].barh(y=y_orientation_pre-delt,
+             width=x_orientation_pre,
+             height=delt*1.8,
+             color=precolor,
+             label='pre-survey (n={})'.format(len(predf)))
+    axs[3].bar_label(p,fontsize=10)
+    p=axs[3].barh(y=y_orientation_post+delt,
+             width=x_orientation_post,
+             height=delt*1.8,
+             color=postcolor,
+             label='post-survey (n={})'.format(len(postdf)))
+    axs[3].bar_label(p,fontsize=10)
+    axs[3].set_yticks(y_orientation_post,names_orientation)
+    axs[3].set_title('Sexual Orientation')
+    
+    axs[3].set_xlabel('count')
+    # axs[3].set_xlim(0,100)
+    
+    axs[3].legend(loc='lower center',bbox_to_anchor=(0.5,-0.5))
+    
+    plt.suptitle(symp_name,fontsize=20)
+    
+    # plt.tight_layout()
+
+    os.chdir('/Users/as822/Library/CloudStorage/Box-Box/!Research/FLXSUS/')
+    if savefig: fig.savefig('AMEC24_FLNSUS_Longitudinal/prepost_count_'+symp_name+'.jpeg',dpi=300,bbox_inches='tight');
+    os.chdir(homedir)
+
+
+
+
+
+
+
 
 sys.exit()
 
