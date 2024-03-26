@@ -33,7 +33,7 @@ savefig=True
 deprecate = False
 
 plt.rcParams['font.size'] = '12'
-plt.rcParams['font.family'] = 'serif'
+plt.rcParams['font.family'] = 'sans-serif'
 
 # colorblind tool
 # https://davidmathlogic.com/colorblind/#%23D81B60-%231E88E5-%23FFC107-%23004D40
@@ -165,6 +165,279 @@ def prepost_plot(df_pre, df_post, cols):
     return fig, ax, n
 
 # =============================================================================
+# Get Pre/Post for subscores
+# =============================================================================
+def prepost_data(df_pre, df_post, cols):
+    col_names=[i.split(' - ', 1)[1] for i in cols]
+    uid_pre=set(df_pre['Unique ID']);
+    uid_post=set(df_post['Unique ID']);
+
+    uid_all=list(uid_pre.intersection(uid_post))
+    uid_all.sort()
+
+    df_pre_uid=df_pre.loc[df_pre['Unique ID'].isin(uid_all),['Unique ID']+cols];
+    df_pre_uid=df_pre_uid.set_index(df_pre_uid['Unique ID']).sort_index();
+    df_post_uid=df_post.loc[df_post['Unique ID'].isin(uid_all),['Unique ID']+cols];
+    df_post_uid=df_post_uid.set_index(df_post_uid['Unique ID']).sort_index();
+
+    df_pre_uid=df_pre_uid.replace({'Strongly agree': 5, 
+                                   'Somewhat agree': 4,
+                                   'Neither agree nor disagree': 3,
+                                   'Somewhat disagree': 2,
+                                   'Strongly disagree': 1,})
+
+    df_post_uid=df_post_uid.replace({'Strongly agree': 5, 
+                                   'Somewhat agree': 4,
+                                   'Neither agree nor disagree': 3,
+                                   'Somewhat disagree': 2,
+                                   'Strongly disagree': 1,})
+
+    pre, post=df_pre_uid.align(df_post_uid,join="outer",axis=None)
+    
+    
+    
+    return col_names, pre, post
+
+# colset
+col_neuro=['Select your level of agreement for the following statements - I can become a neurosurgeon',
+             'Select your level of agreement for the following statements - I have the ability to shadow neurosurgical procedures',
+             'Select your level of agreement for the following statements - I am familiar with the career pathway to become a neurosurgeon',
+             'Select your level of agreement for the following statements - I have the institutional support and resources to become a neurosurgeon',
+             'Select your level of agreement for the following statements - I am connected to mentors that can help me become a neurosurgeon',
+             'Select your level of agreement for the following statements - I know the day-to-day responsibilities of a neurosurgeon',
+             'Select your level of agreement for the following statements - I can list at least three subspecialties of neurosurgery',
+             'Select your level of agreement for the following statements - Neurosurgery is a good field for minorities and women',
+             'Select your level of agreement for the following statements - I have seen or met a Woman neurosurgeon',
+             'Select your level of agreement for the following statements - I have seen or met a Black neurosurgeon',
+             'Select your level of agreement for the following statements - I have seen or met a Latinx neurosurgeon',
+             'Select your level of agreement for the following statements - Neurosurgeons are intimidating',
+             'Select your level of agreement for the following statements - Neurosurgeons have a good work-life balance',
+             'Select your level of agreement for the following statements - Neurosurgeons have reasonable work hours',
+             "Select your level of agreement for the following statements - Neurosurgeons improve their patients' quality of life",]
+
+
+col_setid=['abilities',
+           'abilities',
+           'knowledge',
+           'support',
+           'support',
+           'knowledge',
+           'knowledge',
+           'diversity',
+           'diversity',
+           'diversity',
+           'diversity',
+           'na',
+           'field',
+           'field',
+           'field',];
+
+subscore_names=['abilities', 'diversity', 'field', 'knowledge', 'support'];
+
+### do stuff to make just subsets
+# col_names, s_pre21, s_post21= prepost_data(pre21, post21, col_neuro)
+
+presets=[pre21,pre22,pre23]
+postsets=[post21,post22,post23];
+set_names=['2021','2022','2023'];
+
+### way to do it, combining them all 
+
+# fig,ax = plt.subplots(nrows=3,ncols=5,sharey=True,sharex=True,figsize=(8,6))
+fig,ax = plt.subplots(nrows=1,ncols=5,sharey=True,sharex=True,figsize=(8,2))
+
+for i,name in enumerate(set_names):
+    
+    col_names, pre, post= prepost_data(presets[i], postsets[i], col_neuro)
+    
+    for j,subname in enumerate(subscore_names):
+        
+        axs=ax[j]
+        
+        idx_set=[i for i, x in enumerate(col_setid) if x==subname]
+        
+        preval=pre.iloc[:,np.array(idx_set)+1].sum(axis=1);
+        postval=post.iloc[:,np.array(idx_set)+1].sum(axis=1);
+        
+        maxval=len(idx_set)*5
+        
+        tempdf= pd.DataFrame(data={'UID':pre['Unique ID'],
+                                   'pre': preval/maxval,
+                                   'post': postval/maxval}).melt(id_vars=['UID'],)
+        tempdf['conference']=name;
+        sns.lineplot(x="variable", 
+                      y="value",
+                      hue='conference',
+                      seed=1,
+                      palette=[palette_wong[i]],
+                      data=tempdf,
+                      ax=axs,
+                      err_style="bars",
+                      markers=True,
+                      ci=95,
+                      err_kws={'capsize':3},
+                      legend=None)
+        
+        # ax[j].get_legend().set_visible(False)
+        p = pg.wilcoxon(preval, postval, alternative='two-sided')
+        
+        
+        if p['p-val'][0]>=0.05:
+            pstr='ns';
+        elif p['p-val'][0]>0.01:
+            pstr='*';
+        elif p['p-val'][0]>0.001:
+            pstr='**';
+        else:
+            pstr='***';
+            
+        # axs.text(0.5,0.3-i/10,"p = {:.1e}".format(p['p-val'][0]),ha='center',fontsize=10,c = palette_wong[i])
+        axs.text(0.5,1.1-i/10,pstr,ha='center',fontsize=10,c = palette_wong[i],fontweight='bold')
+        
+        if j==0 & i==2:
+            # axs.set_ylabel(name,fontsize=12)
+            # axs.set_ylabel(name,fontsize=12)
+            axs.legend()
+            
+        if i==0:
+            axs.set_title(subname,fontsize=12)
+        
+        
+        # sns.histplot(data=tempdf,
+        #              y="value",
+        #              hue='variable',
+        #              bins=np.arange(0,maxval+2)-0.5,
+        #              alpha=0.5,
+        #              ax=ax[i][j])
+        
+        # tempdf['score']=subname;
+        # tempdf['conference']=name;
+        
+        # fig,ax = plt.subplots()
+        
+        # sns.boxplot(x="variable", y="value",data=tempdf,)
+        # # sns.violinplot(data=tempdf, 
+        # #                ax=ax,
+        # #                x='ax',
+        # #                y="value", 
+        # #                hue="variable",
+        # #                cut=0,
+        # #                split=True, 
+        # #                inner=None, 
+        # #                fill=False,)
+        
+
+axs.set_xlim(-0.2,1.2)
+axs.set_ylim(0,1.22)
+
+os.chdir('/Users/as822/Library/CloudStorage/Box-Box/!Research/FLXSUS/')
+if savefig: fig.savefig('AMEC24_FLNSUS_Longitudinal/composites_compressed.jpeg',dpi=300,bbox_inches='tight');
+os.chdir(homedir)
+
+# =============================================================================
+# try this with post-pre
+# =============================================================================
+# col_names, s_pre21, s_post21= prepost_data(pre21, post21, col_neuro)
+
+presets=[post21,post22,]
+postsets=[pre22,pre23,];
+set_names=['2021-2022','2022-2023'];
+
+### way to do it, combining them all 
+
+# fig,ax = plt.subplots(nrows=2,ncols=5,sharey=True,sharex=True,figsize=(8,4))
+fig,ax = plt.subplots(nrows=1,ncols=5,sharey=True,sharex=True,figsize=(8,2))
+
+for i,name in enumerate(set_names):
+    
+    col_names, pre, post= prepost_data(presets[i], postsets[i], col_neuro)
+    
+    for j,subname in enumerate(subscore_names):
+        
+        axs=ax[j]
+        
+        idx_set=[i for i, x in enumerate(col_setid) if x==subname]
+        
+        preval=pre.iloc[:,np.array(idx_set)+1].sum(axis=1);
+        postval=post.iloc[:,np.array(idx_set)+1].sum(axis=1);
+        
+        maxval=len(idx_set)*5
+        
+        tempdf= pd.DataFrame(data={'UID':pre['Unique ID'],
+                                   'post': preval/maxval,
+                                   'pre': postval/maxval}).melt(id_vars=['UID'],)
+        tempdf['conference']=name;
+        sns.lineplot(x="variable", 
+                      y="value",
+                      hue='conference',
+                      seed=1,
+                      palette=[palette_wong[i]],
+                      data=tempdf,
+                      ax=axs,
+                      err_style="bars",
+                      markers=True,
+                      ci=95,
+                      err_kws={'capsize':3},
+                      legend=None)
+        
+        # ax[j].get_legend().set_visible(False)
+        p = pg.wilcoxon(preval, postval, alternative='two-sided')
+        
+        if p['p-val'][0]>=0.05:
+            pstr='ns';
+        elif p['p-val'][0]>0.01:
+            pstr='*';
+        elif p['p-val'][0]>0.001:
+            pstr='**';
+        else:
+            pstr='***';
+            
+        # axs.text(0.5,0.3-i/10,"p = {:.1e}".format(p['p-val'][0]),ha='center',fontsize=10,c = palette_wong[i])
+        axs.text(0.5,1-i/10,pstr,ha='center',fontsize=10,c = palette_wong[i],fontweight='bold')
+        
+        if j==0 & i==1:
+            # axs.set_ylabel(name,fontsize=12)
+            # axs.set_ylabel(name,fontsize=12)
+            axs.legend()
+            
+        if i==0:
+            axs.set_title(subname,fontsize=12)
+        
+        # sns.histplot(data=tempdf,
+        #              y="value",
+        #              hue='variable',
+        #              bins=np.arange(0,maxval+2)-0.5,
+        #              alpha=0.5,
+        #              ax=ax[i][j])
+        
+        # tempdf['score']=subname;
+        # tempdf['conference']=name;
+        
+        # fig,ax = plt.subplots()
+        
+        # sns.boxplot(x="variable", y="value",data=tempdf,)
+        # # sns.violinplot(data=tempdf, 
+        # #                ax=ax,
+        # #                x='ax',
+        # #                y="value", 
+        # #                hue="variable",
+        # #                cut=0,
+        # #                split=True, 
+        # #                inner=None, 
+        # #                fill=False,)
+        
+
+axs.set_xlim(-0.2,1.2)
+axs.set_ylim(0,1.1)
+
+os.chdir('/Users/as822/Library/CloudStorage/Box-Box/!Research/FLXSUS/')
+if savefig: fig.savefig('AMEC24_FLNSUS_Longitudinal/postpre_compressed.jpeg',dpi=300,bbox_inches='tight');
+os.chdir(homedir)
+
+sys.exit()
+
+
+# =============================================================================
 # Pre/Post Perceptions
 # =============================================================================
 c_pre21=set([col for col in pre21 if col.startswith('Select your level of agreement for the following statements - ')])
@@ -177,7 +450,7 @@ c_post23=set([col for col in post23 if col.startswith('Select your level of agre
 col_perceptions=list(c_pre21.intersection(c_post21,c_post22,c_post23,c_pre22,c_pre23))
 col_names=[i.split(' - ', 1)[1] for i in col_perceptions]
 
-
+sys.exit()
 fig, ax, n = prepost_plot(pre21, post21, col_perceptions)
 ax.set_title('FLNSUS 2021 Pre/Post Data')
 os.chdir('/Users/as822/Library/CloudStorage/Box-Box/!Research/FLXSUS/')

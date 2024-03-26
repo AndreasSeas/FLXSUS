@@ -29,14 +29,19 @@ from scipy.stats import chisquare
 # =============================================================================
 # Set init parameters and organize graphics
 # =============================================================================
-savefig=False
+savefig=True
 deprecate = False
 
 plt.rcParams['font.size'] = '12'
-plt.rcParams['font.family'] = 'serif'
+plt.rcParams['font.family'] = 'sans-serif'
 
 # colorblind tool
 # https://davidmathlogic.com/colorblind/#%23D81B60-%231E88E5-%23FFC107-%23004D40
+palette_flxsus = ["#59388bff", # NSU
+                  "#800020ff", # Plastics
+                  "#2d6d77ff",# Ortho
+                  ]
+
 palette_wong = ["#000000",
                 "#E69F00",
                 "#56B4E9",
@@ -90,6 +95,66 @@ def wrap_labels_x(ax, width, break_long_words=False):
 world = geopandas.read_file(geopandas.datasets.get_path('naturalearth_lowres'))    
 
 # init the figure    
+fig, axs=plt.subplots(figsize=(10,5),ncols=1,nrows=1,)
+
+set_excel=['DATA_FLNSUS_post_2023.xlsx',
+           'DATA_FLOSUS_post_2023.xlsx',
+           'DATA_FLPSUS_post_2023.xlsx']
+# set_df=[post23_FLNSUS,post23_FLOSUS,post23_FLPSUS]
+set_names=['Neurosurgery','Orthopaedic Surgery','Plastic Surgery']
+
+
+UID_post=list()
+
+
+ax=axs
+# create a world plot on that axis
+world.plot(ax=ax,color='#CCCCCC',zorder=-1000)
+
+# plot boundaries between countries
+world.boundary.plot(color=[0.5,0.5,0.5],linewidth=0.5,ax=ax,zorder=-900)
+# set figure metadata
+
+markerset=[4,5,6]
+
+for i, excel_name in enumerate(set_excel):
+    ax=axs
+    
+
+    df1=idfile.loc[idfile[excel_name]==True,['Unique ID','Latitude','Longitude']]
+
+    UID_post.append(df1['Unique ID'])
+
+    ax.scatter(df1.loc[:,'Longitude'],
+                df1.loc[:,'Latitude'],
+                s=20,
+                marker=markerset[i],
+                facecolors=palette_flxsus[i],
+                edgecolors=palette_flxsus[i],
+                linewidths=0,
+                alpha=0.7,
+                label=set_names[i],)
+    # sys.exit()
+    ax.set_axis_off()
+    # ax.set_title(set_names[i])
+ax.legend(loc=8,ncol=3)
+# plt.suptitle('Post-Survey Map',fontsize=20)
+plt.tight_layout()
+
+os.chdir('/Users/as822/Library/CloudStorage/Box-Box/!Research/FLXSUS/')
+# if savefig: fig.savefig('AMEC_FLXSUS_virtual/post_map_2023_oneplot.jpeg',dpi=300);
+os.chdir(homedir)
+
+
+
+# =============================================================================
+# Plot different 2023 specialty data on the map (postsurvey)
+# =============================================================================
+
+# load in the world map
+world = geopandas.read_file(geopandas.datasets.get_path('naturalearth_lowres'))    
+
+# init the figure    
 fig, axs=plt.subplots(figsize=(10,10),ncols=1,nrows=3,)
 
 set_excel=['DATA_FLNSUS_post_2023.xlsx',
@@ -118,10 +183,10 @@ for i, excel_name in enumerate(set_excel):
                 df1.loc[:,'Latitude'],
                 s=10,
                 marker='o',
-                facecolors=palette_wong[i],
-                edgecolors=palette_wong[i],
+                facecolors=palette_flxsus[i],
+                edgecolors=palette_flxsus[i],
                 linewidths=1,
-                alpha=1,
+                alpha=0.8,
                 label=set_names[i])
 
     ax.set_axis_off()
@@ -130,9 +195,378 @@ plt.suptitle('Post-Survey Map',fontsize=20)
 plt.tight_layout()
 
 os.chdir('/Users/as822/Library/CloudStorage/Box-Box/!Research/FLXSUS/')
-if savefig: fig.savefig('AMEC_FLXSUS_virtual/post_map_2023.jpeg',dpi=300);
+# if savefig: fig.savefig('AMEC_FLXSUS_virtual/post_map_2023_newcolor.jpeg',dpi=300);
 os.chdir(homedir)
 
+
+# =============================================================================
+# Pre/Post Perceptions
+# =============================================================================
+# pre23=pd.read_excel("DATA_FLXSUS_pre_2023.xlsx")
+# post23_FLOSUS=pd.read_excel("DATA_FLOSUS_post_2023.xlsx")
+# post23_FLPSUS=pd.read_excel("DATA_FLPSUS_post_2023.xlsx")
+# post23_FLNSUS=pd.read_excel("DATA_FLNSUS_post_2023.xlsx")
+
+col_general=['Select your level of agreement for the following statements - I will get into medical school',
+             'Select your level of agreement for the following statements - I will become a doctor',
+             'Select your level of agreement for the following statements - I have the ability to shadow physicians',
+             'Select your level of agreement for the following statements - I am familiar with the career pathway to become a doctor',
+             'Select your level of agreement for the following statements - I have the institutional support and resources to become a doctor',
+             'Select your level of agreement for the following statements - I am connected to mentors that can help me become a doctor',
+             'Select your level of agreement for the following statements - Medicine is a good field for minorities and women',
+             'Select your level of agreement for the following statements - I have seen or met a Woman doctor',
+             'Select your level of agreement for the following statements - I have seen or met a Black doctor',
+             'Select your level of agreement for the following statements - I have seen or met a Latinx doctor',
+             'Select your level of agreement for the following statements - Doctors have a good work-life balance',
+             'Select your level of agreement for the following statements - Doctors have reasonable work hours',
+             "Select your level of agreement for the following statements - Doctors improve their patients' quality of life",
+             'Select your level of agreement for the following statements - Doctors will always have secure jobs',
+             'Select your level of agreement for the following statements - Doctors are financially stable',]
+
+col_neuro=['Select your level of agreement for the following statements - I can become a neurosurgeon',
+             'Select your level of agreement for the following statements - I have the ability to shadow neurosurgical procedures',
+             'Select your level of agreement for the following statements - I am familiar with the career pathway to become a neurosurgeon',
+             'Select your level of agreement for the following statements - I have the institutional support and resources to become a neurosurgeon',
+             'Select your level of agreement for the following statements - I am connected to mentors that can help me become a neurosurgeon',
+             'Select your level of agreement for the following statements - I know the day-to-day responsibilities of a neurosurgeon',
+             'Select your level of agreement for the following statements - I can list at least three subspecialties of neurosurgery',
+             'Select your level of agreement for the following statements - Neurosurgery is a good field for minorities and women',
+             'Select your level of agreement for the following statements - I have seen or met a neurosurgeon before',
+             'Select your level of agreement for the following statements - I have seen or met a Woman neurosurgeon',
+             'Select your level of agreement for the following statements - I have seen or met a Black neurosurgeon',
+             'Select your level of agreement for the following statements - I have seen or met a Latinx neurosurgeon',
+             'Select your level of agreement for the following statements - Neurosurgeons are intimidating',
+             'Select your level of agreement for the following statements - Neurosurgeons have a good work-life balance',
+             'Select your level of agreement for the following statements - Neurosurgeons have reasonable work hours',
+             "Select your level of agreement for the following statements - Neurosurgeons improve their patients' quality of life",
+             'Select your level of agreement for the following statements - Neurosurgeons will always have secure jobs',
+             'Select your level of agreement for the following statements - Neurosurgeons are financially stable']
+
+col_ortho=['Select your level of agreement for the following statements - I can become an orthopaedic surgeon',
+ 'Select your level of agreement for the following statements - I have the ability to shadow orthopaedic surgery procedures',
+ 'Select your level of agreement for the following statements - I am familiar with the career pathway to become an orthopaedic surgeon',
+ 'Select your level of agreement for the following statements - I have the institutional support and resources to become an orthopaedic surgeon',
+ 'Select your level of agreement for the following statements - I am connected to mentors that can help me become an orthopaedic surgeon',
+ 'Select your level of agreement for the following statements - I know the day-to-day responsibilities of an orthopaedic surgeon',
+ 'Select your level of agreement for the following statements - I can list at least three subspecialties of orthopaedic surgery',
+ 'Select your level of agreement for the following statements - Orthopaedic Surgery is a good field for minorities and women',
+ 'Select your level of agreement for the following statements - I have seen or met an orthopaedic surgeon before',
+ 'Select your level of agreement for the following statements - I have seen or met a Woman orthopaedic surgeon',
+ 'Select your level of agreement for the following statements - I have seen or met a Black orthopaedic surgeon',
+ 'Select your level of agreement for the following statements - I have seen or met a Latinx orthopaedic surgeon',
+ 'Select your level of agreement for the following statements - Orthopaedic Surgeons are intimidating',
+ 'Select your level of agreement for the following statements - Orthopaedic Surgeons have a good work-life balance',
+ 'Select your level of agreement for the following statements - Orthopaedic Surgeons have reasonable work hours',
+ "Select your level of agreement for the following statements - Orthopaedic Surgeons improve their patients' quality of life",
+ 'Select your level of agreement for the following statements - Orthopaedic Surgeons will always have secure jobs',
+ 'Select your level of agreement for the following statements - Orthopaedic Surgeons are financially stable']
+
+col_plastics=['Select your level of agreement for the following statements - I can become a plastic surgeon',
+'Select your level of agreement for the following statements - I have the ability to shadow plastic surgery procedures',
+'Select your level of agreement for the following statements - I am familiar with the career pathway to become a plastic surgeon',
+'Select your level of agreement for the following statements - I have the institutional support and resources to become a plastic surgeon',
+'Select your level of agreement for the following statements - I am connected to mentors that can help me become a plastic surgeon',
+'Select your level of agreement for the following statements - I know the day-to-day responsibilities of a plastic surgeon',
+'Select your level of agreement for the following statements - I can list at least three subspecialties of plastic surgery',
+'Select your level of agreement for the following statements - Plastic Surgery is a good field for minorities and women',
+'Select your level of agreement for the following statements - I have seen or met a plastic surgeon before',
+'Select your level of agreement for the following statements - I have seen or met a Woman plastic surgeon',
+'Select your level of agreement for the following statements - I have seen or met a Black plastic surgeon',
+'Select your level of agreement for the following statements - I have seen or met a Latinx plastic surgeon',
+'Select your level of agreement for the following statements - Plastic Surgeons are intimidating',
+'Select your level of agreement for the following statements - Plastic Surgeons have a good work-life balance',
+'Select your level of agreement for the following statements - Plastic Surgeons have reasonable work hours',
+"Select your level of agreement for the following statements - Plastic Surgeons improve their patients' quality of life",
+'Select your level of agreement for the following statements - Plastic Surgeons will always have secure jobs',
+'Select your level of agreement for the following statements - Plastic Surgeons are financially stable']
+
+col_setid=['abilities',
+           'abilities',
+           'knowledge',
+           'support',
+           'support',
+           'knowledge',
+           'knowledge',
+           'diversity',
+           'na',
+           'diversity',
+           'diversity',
+           'diversity',
+           'na',
+           'field',
+           'field',
+           'field',
+           'field',
+           'field',];
+
+subscore_names=['abilities', 'diversity', 'field', 'knowledge', 'support'];
+
+# col_perceptions=[col for col in post23_FLNSUS if col.startswith('Select your level of agreement for the following statements - ')]
+
+
+def prepost_plot(df_pre, df_post, cols):
+    col_names=[i.split(' - ', 1)[1] for i in cols]
+    uid_pre=set(df_pre['Unique ID']);
+    uid_post=set(df_post['Unique ID']);
+
+    uid_all=list(uid_pre.intersection(uid_post))
+    uid_all.sort()
+
+    df_pre_uid=df_pre.loc[df_pre['Unique ID'].isin(uid_all),['Unique ID']+cols];
+    df_pre_uid=df_pre_uid.set_index(df_pre_uid['Unique ID']).sort_index();
+    df_post_uid=df_post.loc[df_post['Unique ID'].isin(uid_all),['Unique ID']+cols];
+    df_post_uid=df_post_uid.set_index(df_post_uid['Unique ID']).sort_index();
+
+    df_pre_uid=df_pre_uid.replace({'Strongly agree': 5, 
+                                   'Somewhat agree': 4,
+                                   'Neither agree nor disagree': 3,
+                                   'Somewhat disagree': 2,
+                                   'Strongly disagree': 1,})
+
+    df_post_uid=df_post_uid.replace({'Strongly agree': 5, 
+                                   'Somewhat agree': 4,
+                                   'Neither agree nor disagree': 3,
+                                   'Somewhat disagree': 2,
+                                   'Strongly disagree': 1,})
+
+    pre, post=df_pre_uid.align(df_post_uid,join="outer",axis=None)
+
+    fig, ax=plt.subplots(figsize=(4,5),ncols=1,nrows=1,);
+    bonf=1;
+
+    # ax.set_yticks(np.arange(0,len(col_names)));
+
+    for idx,col in enumerate(cols):
+        stats=pg.wilcoxon(pre.loc[:,col],
+                          post.loc[:,col], 
+                          alternative='two-sided')
+
+        # print(col_names[idx]);
+        # print('    p-val = ',stats['p-val'].values[0])
+       
+        ax.plot(np.mean(pre.loc[:,col]),idx,'xk');
+        ax.plot([np.mean(pre.loc[:,col]),
+                         np.mean(post.loc[:,col])],[idx,idx],'-',color='k');
+        
+        if stats['p-val'][0]<0.001/bonf:
+            pcolor='red'
+        elif stats['p-val'][0]<0.01/bonf:
+            pcolor='#ff781f'
+        elif stats['p-val'][0]<0.05/bonf:
+            pcolor='green'
+        else:
+            pcolor='grey'
+        
+        ax.plot(np.mean(post.loc[:,col]),idx,'o',color=pcolor);
+        
+        
+        ax.text(5.1,idx,"{0:.3f}".format(stats['p-val'][0]),
+                verticalalignment='center',color=pcolor)
+
+        ax.text(0.9,idx,col_names[idx],
+                    verticalalignment='center',horizontalalignment='right',color='black');
+
+
+    ax.set_yticks(np.arange(0,len(col_names)),labels=[''] * len(col_names));
+    ax.set_xticks(np.arange(1,6));
+    ax.set_xticklabels(['Strongly\ndisagree','Somewhat\ndisagree',
+                        'Neither agree\nnor disagree','Somewhat\nagree',
+                        'Strongly\nagree'])    
+    ax.grid(axis = 'x',linewidth=0.5)
+    ax.grid(axis = 'y',linewidth=0.5)        
+    
+    return fig, ax
+
+def prepost_data(df_pre, df_post, cols):
+    col_names=[i.split(' - ', 1)[1] for i in cols]
+    uid_pre=set(df_pre['Unique ID']);
+    uid_post=set(df_post['Unique ID']);
+
+    uid_all=list(uid_pre.intersection(uid_post))
+    uid_all.sort()
+
+    df_pre_uid=df_pre.loc[df_pre['Unique ID'].isin(uid_all),['Unique ID']+cols];
+    df_pre_uid=df_pre_uid.set_index(df_pre_uid['Unique ID']).sort_index();
+    df_post_uid=df_post.loc[df_post['Unique ID'].isin(uid_all),['Unique ID']+cols];
+    df_post_uid=df_post_uid.set_index(df_post_uid['Unique ID']).sort_index();
+
+    df_pre_uid=df_pre_uid.replace({'Strongly agree': 5, 
+                                   'Somewhat agree': 4,
+                                   'Neither agree nor disagree': 3,
+                                   'Somewhat disagree': 2,
+                                   'Strongly disagree': 1,})
+
+    df_post_uid=df_post_uid.replace({'Strongly agree': 5, 
+                                   'Somewhat agree': 4,
+                                   'Neither agree nor disagree': 3,
+                                   'Somewhat disagree': 2,
+                                   'Strongly disagree': 1,})
+
+    pre, post=df_pre_uid.align(df_post_uid,join="outer",axis=None)
+    
+    
+    
+    return col_names, pre, post
+
+### do stuff to make just subsets
+col_names, per_pre_neuro, per_post_neuro= prepost_data(pre23, post23_FLNSUS, col_neuro)
+col_names, per_pre_ortho, per_post_ortho= prepost_data(pre23, post23_FLOSUS, col_ortho)
+col_names, per_pre_plastics, per_post_plastics= prepost_data(pre23, post23_FLPSUS, col_plastics)
+
+colsets=[col_neuro,col_ortho,col_plastics];
+postsets=[post23_FLNSUS,post23_FLOSUS,post23_FLPSUS];
+set_names=['Neurosurgery','Orthopaedic Surgery','Plastic Surgery'];
+
+### way to do it, combining them all 
+
+fig,ax = plt.subplots(nrows=3,ncols=5,sharey=True,sharex=True,figsize=(5,10))
+
+for i,name in enumerate(set_names):
+    
+    col_names, pre, post= prepost_data(pre23, postsets[i], colsets[i])
+    
+    for j,subname in enumerate(subscore_names):
+        
+        idx_set=[i for i, x in enumerate(col_setid) if x==subname]
+        
+        preval=pre.iloc[:,np.array(idx_set)+1].sum(axis=1);
+        postval=post.iloc[:,np.array(idx_set)+1].sum(axis=1);
+        
+        maxval=len(idx_set)*5
+        
+        tempdf= pd.DataFrame(data={'UID':pre['Unique ID'],
+                                   'pre': preval/maxval,
+                                   'post': postval/maxval}).melt(id_vars=['UID'],)
+        tempdf['conference']=name;
+        # sns.lineplot(x="variable", 
+        #              y="value",
+        #              hue='conference',
+        #              seed=1,
+        #              palette=[palette_flxsus[i]],
+        #              data=tempdf,
+        #              ax=ax[i][j],
+        #              err_style="bars",
+        #              markers=True,
+        #              ci=95,
+        #              err_kws={'capsize':3},
+        #              legend=None)
+        
+        sns.violinplot(data=tempdf, 
+                        ax=ax[i][j],
+                        x='conference',
+                        y="value", 
+                        hue="variable",
+                        cut=0,
+                        split=True, 
+                        inner=None, 
+                        fill=False,
+                        legend=False)
+        ax[i][j].get_legend().set_visible(False)
+        p = pg.wilcoxon(preval, postval, alternative='two-sided')
+        
+        ax[i][j].text(0.5,0.1,"p-val \n{:.1e}".format(p['p-val'][0]),ha='center',fontsize=10)
+        
+        if j==0:
+            ax[i][j].set_ylabel(name,fontsize=12)
+            
+        if i==0:
+            ax[i][j].set_title(subname,fontsize=12)
+        
+        # sns.histplot(data=tempdf,
+        #              y="value",
+        #              hue='variable',
+        #              bins=np.arange(0,maxval+2)-0.5,
+        #              alpha=0.5,
+        #              ax=ax[i][j])
+        
+        # tempdf['score']=subname;
+        # tempdf['conference']=name;
+        
+        # fig,ax = plt.subplots()
+        
+        # sns.boxplot(x="variable", y="value",data=tempdf,)
+        # # sns.violinplot(data=tempdf, 
+        # #                ax=ax,
+        # #                x='ax',
+        # #                y="value", 
+        # #                hue="variable",
+        # #                cut=0,
+        # #                split=True, 
+        # #                inner=None, 
+        # #                fill=False,)
+        
+
+
+
+# ax[i][j].set_xlim(-0.2,1.2)
+ax[i][j].set_ylim(0,1.05)
+
+os.chdir('/Users/as822/Library/CloudStorage/Box-Box/!Research/FLXSUS/')
+# if savefig: fig.savefig('AMEC_FLXSUS_virtual/all_subscores.jpeg',dpi=300);
+os.chdir(homedir)
+
+sys.exit()
+# sns.despine(fig=fig,bottom=True, trim)
+
+### one way to do it, one by one
+
+
+for i,name in enumerate(set_names):
+    
+    col_names, pre, post= prepost_data(pre23, postsets[i], colsets[i])
+    
+    for subname in subscore_names:
+        
+        idx_set=[i for i, x in enumerate(col_setid) if x==subname]
+        
+        preval=pre.iloc[:,np.array(idx_set)+1].sum(axis=1);
+        postval=post.iloc[:,np.array(idx_set)+1].sum(axis=1);
+        
+        tempdf= pd.DataFrame(data={'UID':pre['Unique ID'],
+                                   'pre': preval,
+                                   'post': postval}).melt(id_vars=['UID'],)
+        tempdf['ax']=1;
+        
+        fig,ax = plt.subplots()
+        
+        sns.boxplot(x="variable", y="value",data=tempdf,)
+        # sns.violinplot(data=tempdf, 
+        #                ax=ax,
+        #                x='ax',
+        #                y="value", 
+        #                hue="variable",
+        #                cut=0,
+        #                split=True, 
+        #                inner=None, 
+        #                fill=False,)
+        
+    sys.exit()
+    
+    
+    
+
+
+sys.exit()
+
+fig, ax = prepost_plot(pre23, post23_FLNSUS, col_neuro)
+ax.set_title('FLNSUS 2023 Pre/Post Data')
+os.chdir('/Users/as822/Library/CloudStorage/Box-Box/!Research/FLXSUS/')
+if savefig: fig.savefig('AMEC_FLXSUS_virtual/Fig_Wilcoxon_2023_FLNSUS.jpeg',dpi=300,bbox_inches='tight');
+os.chdir(homedir)
+
+fig, ax = prepost_plot(pre23, post23_FLOSUS, col_ortho)
+ax.set_title('FLOSUS 2023 Pre/Post Data')
+os.chdir('/Users/as822/Library/CloudStorage/Box-Box/!Research/FLXSUS/')
+if savefig: fig.savefig('AMEC_FLXSUS_virtual/Fig_Wilcoxon_2023_FLOSUS.jpeg',dpi=300,bbox_inches='tight');
+os.chdir(homedir)
+
+fig, ax = prepost_plot(pre23, post23_FLPSUS, col_plastics)
+ax.set_title('FLPSUS 2023 Pre/Post Data')
+os.chdir('/Users/as822/Library/CloudStorage/Box-Box/!Research/FLXSUS/')
+if savefig: fig.savefig('AMEC_FLXSUS_virtual/Fig_Wilcoxon_2023_FLPSUS.jpeg',dpi=300,bbox_inches='tight');
+os.chdir(homedir)
+
+sys.exit()
 
 # =============================================================================
 # Plot different 2023 specialty data on the map (presurvey)
@@ -802,183 +1236,6 @@ for i, cols in enumerate(colset):
     if savefig: fig.savefig('AMEC_FLXSUS_virtual/post_perceptionsVmed_'+nameset[i]+'.jpeg',dpi=300,bbox_inches='tight');
     os.chdir(homedir)
     
-# =============================================================================
-# Pre/Post Perceptions
-# =============================================================================
-# pre23=pd.read_excel("DATA_FLXSUS_pre_2023.xlsx")
-# post23_FLOSUS=pd.read_excel("DATA_FLOSUS_post_2023.xlsx")
-# post23_FLPSUS=pd.read_excel("DATA_FLPSUS_post_2023.xlsx")
-# post23_FLNSUS=pd.read_excel("DATA_FLNSUS_post_2023.xlsx")
-
-col_general=['Select your level of agreement for the following statements - I will get into medical school',
-             'Select your level of agreement for the following statements - I will become a doctor',
-             'Select your level of agreement for the following statements - I have the ability to shadow physicians',
-             'Select your level of agreement for the following statements - I am familiar with the career pathway to become a doctor',
-             'Select your level of agreement for the following statements - I have the institutional support and resources to become a doctor',
-             'Select your level of agreement for the following statements - I am connected to mentors that can help me become a doctor',
-             'Select your level of agreement for the following statements - Medicine is a good field for minorities and women',
-             'Select your level of agreement for the following statements - I have seen or met a Woman doctor',
-             'Select your level of agreement for the following statements - I have seen or met a Black doctor',
-             'Select your level of agreement for the following statements - I have seen or met a Latinx doctor',
-             'Select your level of agreement for the following statements - Doctors have a good work-life balance',
-             'Select your level of agreement for the following statements - Doctors have reasonable work hours',
-             "Select your level of agreement for the following statements - Doctors improve their patients' quality of life",
-             'Select your level of agreement for the following statements - Doctors will always have secure jobs',
-             'Select your level of agreement for the following statements - Doctors are financially stable',]
-
-col_neuro=['Select your level of agreement for the following statements - I can become a neurosurgeon',
-             'Select your level of agreement for the following statements - I have the ability to shadow neurosurgical procedures',
-             'Select your level of agreement for the following statements - I am familiar with the career pathway to become a neurosurgeon',
-             'Select your level of agreement for the following statements - I have the institutional support and resources to become a neurosurgeon',
-             'Select your level of agreement for the following statements - I am connected to mentors that can help me become a neurosurgeon',
-             'Select your level of agreement for the following statements - I know the day-to-day responsibilities of a neurosurgeon',
-             'Select your level of agreement for the following statements - I can list at least three subspecialties of neurosurgery',
-             'Select your level of agreement for the following statements - Neurosurgery is a good field for minorities and women',
-             'Select your level of agreement for the following statements - I have seen or met a neurosurgeon before',
-             'Select your level of agreement for the following statements - I have seen or met a Woman neurosurgeon',
-             'Select your level of agreement for the following statements - I have seen or met a Black neurosurgeon',
-             'Select your level of agreement for the following statements - I have seen or met a Latinx neurosurgeon',
-             'Select your level of agreement for the following statements - Neurosurgeons are intimidating',
-             'Select your level of agreement for the following statements - Neurosurgeons have a good work-life balance',
-             'Select your level of agreement for the following statements - Neurosurgeons have reasonable work hours',
-             "Select your level of agreement for the following statements - Neurosurgeons improve their patients' quality of life",
-             'Select your level of agreement for the following statements - Neurosurgeons will always have secure jobs',
-             'Select your level of agreement for the following statements - Neurosurgeons are financially stable']
-
-col_ortho=['Select your level of agreement for the following statements - I can become an orthopaedic surgeon',
- 'Select your level of agreement for the following statements - I have the ability to shadow orthopaedic surgery procedures',
- 'Select your level of agreement for the following statements - I am familiar with the career pathway to become an orthopaedic surgeon',
- 'Select your level of agreement for the following statements - I have the institutional support and resources to become an orthopaedic surgeon',
- 'Select your level of agreement for the following statements - I am connected to mentors that can help me become an orthopaedic surgeon',
- 'Select your level of agreement for the following statements - I know the day-to-day responsibilities of an orthopaedic surgeon',
- 'Select your level of agreement for the following statements - I can list at least three subspecialties of orthopaedic surgery',
- 'Select your level of agreement for the following statements - Orthopaedic Surgery is a good field for minorities and women',
- 'Select your level of agreement for the following statements - I have seen or met an orthopaedic surgeon before',
- 'Select your level of agreement for the following statements - I have seen or met a Woman orthopaedic surgeon',
- 'Select your level of agreement for the following statements - I have seen or met a Black orthopaedic surgeon',
- 'Select your level of agreement for the following statements - I have seen or met a Latinx orthopaedic surgeon',
- 'Select your level of agreement for the following statements - Orthopaedic Surgeons are intimidating',
- 'Select your level of agreement for the following statements - Orthopaedic Surgeons have a good work-life balance',
- 'Select your level of agreement for the following statements - Orthopaedic Surgeons have reasonable work hours',
- "Select your level of agreement for the following statements - Orthopaedic Surgeons improve their patients' quality of life",
- 'Select your level of agreement for the following statements - Orthopaedic Surgeons will always have secure jobs',
- 'Select your level of agreement for the following statements - Orthopaedic Surgeons are financially stable']
-
-col_plastics=['Select your level of agreement for the following statements - I can become a plastic surgeon',
-'Select your level of agreement for the following statements - I have the ability to shadow plastic surgery procedures',
-'Select your level of agreement for the following statements - I am familiar with the career pathway to become a plastic surgeon',
-'Select your level of agreement for the following statements - I have the institutional support and resources to become a plastic surgeon',
-'Select your level of agreement for the following statements - I am connected to mentors that can help me become a plastic surgeon',
-'Select your level of agreement for the following statements - I know the day-to-day responsibilities of a plastic surgeon',
-'Select your level of agreement for the following statements - I can list at least three subspecialties of plastic surgery',
-'Select your level of agreement for the following statements - Plastic Surgery is a good field for minorities and women',
-'Select your level of agreement for the following statements - I have seen or met a plastic surgeon before',
-'Select your level of agreement for the following statements - I have seen or met a Woman plastic surgeon',
-'Select your level of agreement for the following statements - I have seen or met a Black plastic surgeon',
-'Select your level of agreement for the following statements - I have seen or met a Latinx plastic surgeon',
-'Select your level of agreement for the following statements - Plastic Surgeons are intimidating',
-'Select your level of agreement for the following statements - Plastic Surgeons have a good work-life balance',
-'Select your level of agreement for the following statements - Plastic Surgeons have reasonable work hours',
-"Select your level of agreement for the following statements - Plastic Surgeons improve their patients' quality of life",
-'Select your level of agreement for the following statements - Plastic Surgeons will always have secure jobs',
-'Select your level of agreement for the following statements - Plastic Surgeons are financially stable']
-
-
-# col_perceptions=[col for col in post23_FLNSUS if col.startswith('Select your level of agreement for the following statements - ')]
-
-
-def prepost_plot(df_pre, df_post, cols):
-    col_names=[i.split(' - ', 1)[1] for i in cols]
-    uid_pre=set(df_pre['Unique ID']);
-    uid_post=set(df_post['Unique ID']);
-
-    uid_all=list(uid_pre.intersection(uid_post))
-    uid_all.sort()
-
-    df_pre_uid=df_pre.loc[df_pre['Unique ID'].isin(uid_all),['Unique ID']+cols];
-    df_pre_uid=df_pre_uid.set_index(df_pre_uid['Unique ID']).sort_index();
-    df_post_uid=df_post.loc[df_post['Unique ID'].isin(uid_all),['Unique ID']+cols];
-    df_post_uid=df_post_uid.set_index(df_post_uid['Unique ID']).sort_index();
-
-    df_pre_uid=df_pre_uid.replace({'Strongly agree': 5, 
-                                   'Somewhat agree': 4,
-                                   'Neither agree nor disagree': 3,
-                                   'Somewhat disagree': 2,
-                                   'Strongly disagree': 1,})
-
-    df_post_uid=df_post_uid.replace({'Strongly agree': 5, 
-                                   'Somewhat agree': 4,
-                                   'Neither agree nor disagree': 3,
-                                   'Somewhat disagree': 2,
-                                   'Strongly disagree': 1,})
-
-    pre, post=df_pre_uid.align(df_post_uid,join="outer",axis=None)
-
-    fig, ax=plt.subplots(figsize=(8,5),ncols=1,nrows=1,);
-    bonf=1;
-
-    # ax.set_yticks(np.arange(0,len(col_names)));
-
-    for idx,col in enumerate(cols):
-        stats=pg.wilcoxon(pre.loc[:,col],
-                          post.loc[:,col], 
-                          alternative='two-sided')
-
-        # print(col_names[idx]);
-        # print('    p-val = ',stats['p-val'].values[0])
-       
-        ax.plot(np.mean(pre.loc[:,col]),idx,'xk');
-        ax.plot([np.mean(pre.loc[:,col]),
-                         np.mean(post.loc[:,col])],[idx,idx],'-',color='k');
-        
-        if stats['p-val'][0]<0.001/bonf:
-            pcolor='red'
-        elif stats['p-val'][0]<0.01/bonf:
-            pcolor='#ff781f'
-        elif stats['p-val'][0]<0.05/bonf:
-            pcolor='green'
-        else:
-            pcolor='grey'
-        
-        ax.plot(np.mean(post.loc[:,col]),idx,'o',color=pcolor);
-        
-        
-        ax.text(5.1,idx,"{0:.3f}".format(stats['p-val'][0]),
-                verticalalignment='center',color=pcolor)
-
-        ax.text(0.9,idx,col_names[idx],
-                    verticalalignment='center',horizontalalignment='right',color='black');
-
-
-    ax.set_yticks(np.arange(0,len(col_names)),labels=[''] * len(col_names));
-    ax.set_xticks(np.arange(1,6));
-    ax.set_xticklabels(['Strongly\ndisagree','Somewhat\ndisagree',
-                        'Neither agree\nnor disagree','Somewhat\nagree',
-                        'Strongly\nagree'])    
-    ax.grid(axis = 'x',linewidth=0.5)
-    ax.grid(axis = 'y',linewidth=0.5)        
-    
-    return fig, ax
-
-
-fig, ax = prepost_plot(pre23, post23_FLNSUS, col_neuro)
-ax.set_title('FLNSUS 2023 Pre/Post Data')
-os.chdir('/Users/as822/Library/CloudStorage/Box-Box/!Research/FLXSUS/')
-if savefig: fig.savefig('AMEC_FLXSUS_virtual/Fig_Wilcoxon_2023_FLNSUS.jpeg',dpi=300,bbox_inches='tight');
-os.chdir(homedir)
-
-fig, ax = prepost_plot(pre23, post23_FLOSUS, col_ortho)
-ax.set_title('FLOSUS 2023 Pre/Post Data')
-os.chdir('/Users/as822/Library/CloudStorage/Box-Box/!Research/FLXSUS/')
-if savefig: fig.savefig('AMEC_FLXSUS_virtual/Fig_Wilcoxon_2023_FLOSUS.jpeg',dpi=300,bbox_inches='tight');
-os.chdir(homedir)
-
-fig, ax = prepost_plot(pre23, post23_FLPSUS, col_plastics)
-ax.set_title('FLPSUS 2023 Pre/Post Data')
-os.chdir('/Users/as822/Library/CloudStorage/Box-Box/!Research/FLXSUS/')
-if savefig: fig.savefig('AMEC_FLXSUS_virtual/Fig_Wilcoxon_2023_FLPSUS.jpeg',dpi=300,bbox_inches='tight');
-os.chdir(homedir)
-
 # =============================================================================
 # Symposium Ratings and Feedback
 # =============================================================================

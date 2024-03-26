@@ -207,10 +207,10 @@ world = geopandas.read_file(geopandas.datasets.get_path('naturalearth_lowres'))
 fig, ax=plt.subplots(figsize=(10,5),ncols=1,nrows=1,)
 
 # create a world plot on that axis
-world.plot(ax=ax,color='#CCCCCC',)
+world.plot(ax=ax,color='#CCCCCC',zorder=-1000)
 
 # plot boundaries between countries
-world.boundary.plot(color=[0.5,0.5,0.5],linewidth=0.5,ax=ax,)
+world.boundary.plot(color=[0.5,0.5,0.5],linewidth=0.5,ax=ax,zorder=-999)
 
 idx=(idfile['DATA_FLNSUS_post_2023.xlsx']==True) | (idfile['DATA_FLNSUS_post_2022.xlsx']==True) | (idfile['DATA_FLNSUS_post_2021.xlsx']==True)
 
@@ -218,12 +218,12 @@ df1=idfile.loc[idx,['Unique ID','Latitude','Longitude']]
 
 ax.scatter(df1.loc[:,'Longitude'],
             df1.loc[:,'Latitude'],
-            s=10,
+            s=20,
             marker='o',
-            facecolors=palette_wong[0],
-            edgecolors=palette_wong[0],
-            linewidths=1,
-            alpha=1,)
+            facecolors="#59388bff",
+            edgecolors="#59388bff",
+            linewidths=0,
+            alpha=0.5,)
 
 ax.set_axis_off()
 # ax.set_title(set_names[i])
@@ -232,9 +232,9 @@ plt.tight_layout()
 
 
 os.chdir('/Users/as822/Library/CloudStorage/Box-Box/!Research/FLXSUS/')
-if savefig: fig.savefig('M_FLNSUS_Longitudinal/post_map_2023.jpeg',dpi=300);
+if savefig: fig.savefig('M_FLNSUS_Longitudinal/post_map_allyears.jpeg',dpi=300);
 os.chdir(homedir)
-
+sys.exit()
 # =============================================================================
 # Pre/Post Perceptions
 # =============================================================================
@@ -398,15 +398,298 @@ os.chdir(homedir)
 # Figure 4: Compare students pre and post with multiple years
 # =============================================================================
 
-per_pre21_melt=pd.melt(per_pre21,id_vars='Unique ID',value_name=col_perceptions)
+## 2021 + 2022 group
+uid_a=set(per_pre21['Unique ID'])
+uid_b=set(per_pre22['Unique ID'])
+uid_ab=uid_a.intersection(uid_b)
+
+dfsets=[per_pre21,per_post21,per_pre22,per_post22,]
+dfsetname=['Pre 2021','Post 2021','Pre 2022','Post 2022',]
+
+idx_ab=list(uid_ab)
+for i,col in enumerate(col_perceptions):# iterate through Q
+    df_temp_repeat=pd.DataFrame(data=None,index=idx_ab,columns=dfsetname)
+    
+    for j,df in enumerate(dfsets):
+        df_temp_repeat.loc[idx_ab,dfsetname[j]]=df.loc[idx_ab,col].values
+    df_temp_repeat=df_temp_repeat.astype(float)
+    # sns.heatmap(df_temp_repeat)
+    fig,ax = plt.subplots()
+    ax.plot(df_temp_repeat.values.T)
+    ax.set_xticks([0,1,2,3],dfsetname)
+    ax.set_ylim(0.5,5.5)
+    ax.set_title(col_names[i])
+
+        
+
+
+## 2022 + 2023 group
+uid_a=set(per_pre22['Unique ID'])
+uid_b=set(per_pre23['Unique ID'])
+uid_ab=uid_a.intersection(uid_b)
+
+dfsets=[per_pre22,per_post22,per_pre23,per_post23,]
+dfsetname=['Pre 2022','Post 2022','Pre 2023','Post 2023',]
+
+idx_ab=list(uid_ab)
+for i,col in enumerate(col_perceptions):# iterate through Q
+    df_temp_repeat=pd.DataFrame(data=None,index=idx_ab,columns=dfsetname)
+    
+    for j,df in enumerate(dfsets):
+        df_temp_repeat.loc[idx_ab,dfsetname[j]]=df.loc[idx_ab,col].values
+    df_temp_repeat=df_temp_repeat.astype(float)
+    # sns.heatmap(df_temp_repeat)
+    fig,ax = plt.subplots()
+    ax.plot(df_temp_repeat.values.T)
+    ax.set_xticks([0,1,2,3],dfsetname)
+    ax.set_ylim(0.5,5.5)
+    ax.set_title(col_names[i])
+
+# =============================================================================
+# Figure 5 idea: composite
+# =============================================================================
+myset=['Select your level of agreement for the following statements - I have seen or met a Latinx neurosurgeon',
+    'Select your level of agreement for the following statements - I have seen or met a Woman neurosurgeon',
+    'Select your level of agreement for the following statements - I have seen or met a Black neurosurgeon',
+    'Select your level of agreement for the following statements - Neurosurgery is a good field for minorities and women',]
+
+## 2021 + 2022 group
+uid_a=set(per_pre21['Unique ID'])
+uid_b=set(per_pre22['Unique ID'])
+uid_ab=uid_a.intersection(uid_b)
+
+dfsets=[per_pre21,per_post21,per_pre22,per_post22,]
+dfsetname=['Pre 2021','Post 2021','Pre 2022','Post 2022',]
+
+idx_ab=list(uid_ab)
+
+df_temp_repeat=pd.DataFrame(data=0,index=idx_ab,columns=dfsetname)
+
+for i,col in enumerate(myset):
+    for j,df in enumerate(dfsets):
+        df_temp_repeat.loc[idx_ab,dfsetname[j]]+=df.loc[idx_ab,col].values
+
+df_temp_repeat=df_temp_repeat.astype(float)
+# sns.heatmap(df_temp_repeat)
+fig,ax = plt.subplots()
+ax.plot(df_temp_repeat.values.T,'-o')
+ax.set_xticks([0,1,2,3],dfsetname)
+ax.set_ylabel('Subscore: diversity in NSU')
+
+fig,ax = plt.subplots()
+sns.heatmap(data=df_temp_repeat,ax=ax,vmin=0,vmax=20,cmap='magma')
+
+fig,ax = plt.subplots()
+df_temp_repeat['Unique ID']=df_temp_repeat.index;
+df_temp_repeat_melt=pd.melt(df_temp_repeat,value_vars=dfsetname,id_vars='Unique ID')
+# sns.lineplot(data=df_temp_repeat_melt,x = 'variable',y='value',ax=ax,)
+sns.boxplot(data=df_temp_repeat_melt,x = 'variable',y='value',ax=ax,)
+ax.set_ylabel('Subscore: diversity in NSU')
+# ax.set_ylim(0,20)
+
+from pingouin import kruskal
+pvec=kruskal(data=df_temp_repeat_melt, 
+        dv='value', 
+        between='variable')
+
+x = df_temp_repeat_melt.loc[df_temp_repeat_melt.variable=='Pre 2021','value']
+y = df_temp_repeat_melt.loc[df_temp_repeat_melt.variable=='Post 2021','value']
+p = pg.wilcoxon(x, y, alternative='two-sided')
+
+x = df_temp_repeat_melt.loc[df_temp_repeat_melt.variable=='Pre 2021','value']
+y = df_temp_repeat_melt.loc[df_temp_repeat_melt.variable=='Pre 2022','value']
+p = pg.wilcoxon(x, y, alternative='two-sided')
+
+x = df_temp_repeat_melt.loc[df_temp_repeat_melt.variable=='Pre 2021','value']
+y = df_temp_repeat_melt.loc[df_temp_repeat_melt.variable=='Post 2022','value']
+p = pg.wilcoxon(x, y, alternative='two-sided')
+
+## 2022 + 2023 group
+uid_a=set(per_pre22['Unique ID'])
+uid_b=set(per_pre23['Unique ID'])
+uid_ab=uid_a.intersection(uid_b)
+
+dfsets=[per_pre22,per_post22,per_pre23,per_post23,]
+dfsetname=['Pre 2022','Post 2022','Pre 2023','Post 2023',]
+
+idx_ab=list(uid_ab)
+
+df_temp_repeat=pd.DataFrame(data=0,index=idx_ab,columns=dfsetname)
+
+for i,col in enumerate(myset):
+    for j,df in enumerate(dfsets):
+        df_temp_repeat.loc[idx_ab,dfsetname[j]]+=df.loc[idx_ab,col].values
+
+df_temp_repeat=df_temp_repeat.astype(float)
+# sns.heatmap(df_temp_repeat)
+fig,ax = plt.subplots()
+ax.plot(df_temp_repeat.values.T,'-o')
+ax.set_xticks([0,1,2,3],dfsetname)
+ax.set_ylabel('Subscore: diversity in NSU')
+
+fig,ax = plt.subplots()
+sns.heatmap(data=df_temp_repeat,ax=ax,vmin=0,vmax=20,cmap='magma')
+
+
+fig,ax = plt.subplots()
+df_temp_repeat['Unique ID']=df_temp_repeat.index;
+df_temp_repeat_melt=pd.melt(df_temp_repeat,value_vars=dfsetname,id_vars='Unique ID')
+sns.lineplot(data=df_temp_repeat_melt,x = 'variable',y='value',ax=ax,)
+ax.set_ylabel('Subscore: diversity in NSU')
+ax.set_ylim(0,20)
+
+# df_temp_repeat['Unique ID']=df_temp_repeat.index;
+# df_temp_repeat_melt=pd.melt(df_temp_repeat,value_vars=dfsetname,id_vars='Unique ID')
+
+# ax.set_ylim(0.5,5.5)
+# ax.set_title(col_names[i])
+
+# =============================================================================
+# Figure 5 idea: composite
+# =============================================================================
+myset=['Select your level of agreement for the following statements - I have the ability to shadow neurosurgical procedures',
+'Select your level of agreement for the following statements - I can become a neurosurgeon',
+'Select your level of agreement for the following statements - I will get into medical school',
+'Select your level of agreement for the following statements - I will become a doctor',]
+
+## 2021 + 2022 group
+uid_a=set(per_pre21['Unique ID'])
+uid_b=set(per_pre22['Unique ID'])
+uid_ab=uid_a.intersection(uid_b)
+
+dfsets=[per_pre21,per_post21,per_pre22,per_post22,]
+dfsetname=['Pre 2021','Post 2021','Pre 2022','Post 2022',]
+
+idx_ab=list(uid_ab)
+
+df_temp_repeat=pd.DataFrame(data=0,index=idx_ab,columns=dfsetname)
+
+for i,col in enumerate(myset):
+    for j,df in enumerate(dfsets):
+        df_temp_repeat.loc[idx_ab,dfsetname[j]]+=df.loc[idx_ab,col].values
+
+df_temp_repeat=df_temp_repeat.astype(float)
+# sns.heatmap(df_temp_repeat)
+fig,ax = plt.subplots()
+ax.plot(df_temp_repeat.values.T,'-o')
+ax.set_xticks([0,1,2,3],dfsetname)
+ax.set_ylabel('Subscore: my abilities')
+
+fig,ax = plt.subplots()
+sns.heatmap(data=df_temp_repeat,ax=ax,vmin=0,vmax=20,cmap='magma')
+
+## 2022 + 2023 group
+uid_a=set(per_pre22['Unique ID'])
+uid_b=set(per_pre23['Unique ID'])
+uid_ab=uid_a.intersection(uid_b)
+
+dfsets=[per_pre22,per_post22,per_pre23,per_post23,]
+dfsetname=['Pre 2022','Post 2022','Pre 2023','Post 2023',]
+
+idx_ab=list(uid_ab)
+
+df_temp_repeat=pd.DataFrame(data=0,index=idx_ab,columns=dfsetname)
+
+for i,col in enumerate(myset):
+    for j,df in enumerate(dfsets):
+        df_temp_repeat.loc[idx_ab,dfsetname[j]]+=df.loc[idx_ab,col].values
+
+df_temp_repeat=df_temp_repeat.astype(float)
+# sns.heatmap(df_temp_repeat)
+fig,ax = plt.subplots()
+ax.plot(df_temp_repeat.values.T,'-o')
+ax.set_xticks([0,1,2,3],dfsetname)
+ax.set_ylabel('Subscore: diversity in NSU')
+ax.set_ylim(0,20)
+
+
+fig,ax = plt.subplots()
+sns.heatmap(data=df_temp_repeat,ax=ax,vmin=0,vmax=20,cmap='magma')
+
+# =============================================================================
+# Figure 5 idea: composite
+# =============================================================================
+myset=['Select your level of agreement for the following statements - I know the day-to-day responsibilities of a neurosurgeon',
+    'Select your level of agreement for the following statements - I can list at least three subspecialties of neurosurgery',    
+    'Select your level of agreement for the following statements - I am familiar with the career pathway to become a neurosurgeon',]
+
+## 2021 + 2022 group
+uid_a=set(per_pre21['Unique ID'])
+uid_b=set(per_pre22['Unique ID'])
+uid_ab=uid_a.intersection(uid_b)
+
+dfsets=[per_pre21,per_post21,per_pre22,per_post22,]
+dfsetname=['Pre 2021','Post 2021','Pre 2022','Post 2022',]
+
+idx_ab=list(uid_ab)
+
+df_temp_repeat=pd.DataFrame(data=0,index=idx_ab,columns=dfsetname)
+
+for i,col in enumerate(myset):
+    for j,df in enumerate(dfsets):
+        df_temp_repeat.loc[idx_ab,dfsetname[j]]+=df.loc[idx_ab,col].values
+
+df_temp_repeat=df_temp_repeat.astype(float)
+# sns.heatmap(df_temp_repeat)
+fig,ax = plt.subplots()
+ax.plot(df_temp_repeat.values.T,'-o')
+ax.set_xticks([0,1,2,3],dfsetname)
+ax.set_ylabel('Subscore: my abilities')
+ax.set_ylim(0,20)
+
+fig,ax = plt.subplots()
+sns.heatmap(data=df_temp_repeat,ax=ax,vmin=0,vmax=20,cmap='magma')
+
+## 2022 + 2023 group
+uid_a=set(per_pre22['Unique ID'])
+uid_b=set(per_pre23['Unique ID'])
+uid_ab=uid_a.intersection(uid_b)
+
+dfsets=[per_pre22,per_post22,per_pre23,per_post23,]
+dfsetname=['Pre 2022','Post 2022','Pre 2023','Post 2023',]
+
+idx_ab=list(uid_ab)
+
+df_temp_repeat=pd.DataFrame(data=0,index=idx_ab,columns=dfsetname)
+
+for i,col in enumerate(myset):
+    for j,df in enumerate(dfsets):
+        df_temp_repeat.loc[idx_ab,dfsetname[j]]+=df.loc[idx_ab,col].values
+
+df_temp_repeat=df_temp_repeat.astype(float)
+# sns.heatmap(df_temp_repeat)
+fig,ax = plt.subplots()
+ax.plot(df_temp_repeat.values.T,'-o')
+ax.set_xticks([0,1,2,3],dfsetname)
+ax.set_ylabel('Subscore: my abilities')
+ax.set_ylim(0,20)
+
+
+fig,ax = plt.subplots()
+sns.heatmap(data=df_temp_repeat,ax=ax,vmin=0,vmax=20,cmap='magma')
+
+# df_temp_repeat['Unique ID']=df_temp_repeat.index;
+# df_temp_repeat_melt=pd.melt(df_temp_repeat,value_vars=dfsetname,id_vars='Unique ID')
+
+# ax.set_ylim(0.5,5.5)
+# ax.set_title(col_names[i])
+
+
+
+sys.exit()
+
+
+per_pre21_melt=pd.melt(per_pre21,id_vars='Unique ID',value_vars=col_perceptions)
 per_pre22_melt=pd.melt(per_pre22,id_vars='Unique ID',value_vars=col_perceptions)
 per_pre23_melt=pd.melt(per_pre23,id_vars='Unique ID',value_vars=col_perceptions)
 
-per_post21_melt=pd.melt(per_post21,id_vars='Unique ID',value_name=col_perceptions)
+per_post21_melt=pd.melt(per_post21,id_vars='Unique ID',value_vars=col_perceptions)
 per_post22_melt=pd.melt(per_post22,id_vars='Unique ID',value_vars=col_perceptions)
 per_post23_melt=pd.melt(per_post23,id_vars='Unique ID',value_vars=col_perceptions)
 
-# 2021 + 2022 group
+
+
+
 
 # 2022 + 2023 group
 
@@ -627,14 +910,16 @@ for i, symp_name in enumerate(set_names):
                           gridspec_kw={'height_ratios':[7,3,6,9]})
     
     ## race
-    axs[0].barh(y=y_race_pre-delt,
+    a = axs[0].barh(y=y_race_pre-delt,
              width=x_race_pre/len(predf)*100,
              height=delt*1.8,
              color=precolor)
-    axs[0].barh(y=y_race_post+delt,
+    b = axs[0].barh(y=y_race_post+delt,
              width=x_race_post/len(postdf)*100,
              height=delt*1.8,
              color=postcolor)
+    plt.bar_label(a,)
+    plt.bar_label(b,)
     axs[0].set_yticks(y_race_post,yl_race_post)
     f_obs = x_race_post
     f_exp = x_race_pre/np.sum(x_race_pre)*np.sum(x_race_post)
