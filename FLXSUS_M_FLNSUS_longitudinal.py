@@ -30,7 +30,7 @@ from scipy.stats import chisquare
 # =============================================================================
 # Set init parameters and organize graphics
 # =============================================================================
-savefig=True
+savefig=False
 deprecate = False
 
 plt.rcParams['font.size'] = '12'
@@ -196,45 +196,61 @@ def prepost_data(df_pre, df_post, cols):
     
     return col_names, pre, post
 
-# =============================================================================
-# Figure 1 - world map
-# =============================================================================
+# # =============================================================================
+# # Figure 1 - world map
+# # =============================================================================
 
-# load in the world map
-world = geopandas.read_file(geopandas.datasets.get_path('naturalearth_lowres'))    
+# # load in the world map
 
-# init the figure    
-fig, ax=plt.subplots(figsize=(10,5),ncols=1,nrows=1,)
+# import numpy as np
+# import matplotlib.pyplot as plt
+# from mpl_toolkits.basemap import Basemap
+# plt.figure(figsize=(8, 8))
+# m = Basemap(projection='ortho', resolution=None, lat_0=50, lon_0=-100)
+# m.bluemarble(scale=0.5);
+# plt.show()
 
-# create a world plot on that axis
-world.plot(ax=ax,color='#CCCCCC',zorder=-1000)
+# fig = plt.figure(figsize=(8, 8))
+# m = Basemap(projection='lcc', resolution=None,
+#             lon_0=0, lat_0=50, lat_1=45, lat_2=55,
+#             width=1.6E7, height=1.2E7)
 
-# plot boundaries between countries
-world.boundary.plot(color=[0.5,0.5,0.5],linewidth=0.5,ax=ax,zorder=-999)
+# world = geopandas.read_file(geopandas.datasets.get_path('naturalearth_lowres'))    
+# world = world.to_crs("EPSG:3822")
+# # init the figure    
+# fig, ax=plt.subplots(figsize=(10,5),ncols=1,nrows=1,)
 
-idx=(idfile['DATA_FLNSUS_post_2023.xlsx']==True) | (idfile['DATA_FLNSUS_post_2022.xlsx']==True) | (idfile['DATA_FLNSUS_post_2021.xlsx']==True)
+# # create a world plot on that axis
+# world.plot(ax=ax,color='#CCCCCC',zorder=-1000,)
+# sys.exit()
+# # ax = geoplot.polyplot(world, projection=geoplot.crs.Orthographic(), figsize=(8, 4))
 
-df1=idfile.loc[idx,['Unique ID','Latitude','Longitude']]
+# # plot boundaries between countries
+# world.boundary.plot(color=[0.5,0.5,0.5],linewidth=0.5,ax=ax,zorder=-999,)
 
-ax.scatter(df1.loc[:,'Longitude'],
-            df1.loc[:,'Latitude'],
-            s=20,
-            marker='o',
-            facecolors="#59388bff",
-            edgecolors="#59388bff",
-            linewidths=0,
-            alpha=0.5,)
+# idx=(idfile['DATA_FLNSUS_post_2023.xlsx']==True) | (idfile['DATA_FLNSUS_post_2022.xlsx']==True) | (idfile['DATA_FLNSUS_post_2021.xlsx']==True)
 
-ax.set_axis_off()
-# ax.set_title(set_names[i])
+# df1=idfile.loc[idx,['Unique ID','Latitude','Longitude']]
 
-plt.tight_layout()
+# ax.scatter(df1.loc[:,'Longitude'],
+#             df1.loc[:,'Latitude'],
+#             s=20,
+#             marker='o',
+#             facecolors="#59388bff",
+#             edgecolors="#59388bff",
+#             linewidths=0,
+#             alpha=0.5,)
 
+# ax.set_axis_off()
+# # ax.set_title(set_names[i])
 
-os.chdir('/Users/as822/Library/CloudStorage/Box-Box/!Research/FLXSUS/')
-if savefig: fig.savefig('M_FLNSUS_Longitudinal/post_map_allyears.jpeg',dpi=300);
-os.chdir(homedir)
-sys.exit()
+# plt.tight_layout()
+
+# sys.exit()
+# os.chdir('/Users/as822/Library/CloudStorage/Box-Box/!Research/FLXSUS/')
+# if savefig: fig.savefig('M_FLNSUS_Longitudinal/post_map_allyears_globe.jpeg',dpi=300);
+# os.chdir(homedir)
+# sys.exit()
 # =============================================================================
 # Pre/Post Perceptions
 # =============================================================================
@@ -331,7 +347,11 @@ data_median = {'pre21': per_pre21.iloc[:,1:].median().values,
 
 df_mean = pd.DataFrame(index=col_names,data=data);
 
+df_mean =df_mean.iloc[::-1]
+
 df_median= pd.DataFrame(index=col_names,data=data_median);
+
+df_median = df_median.iloc[::-1]
 
 fig,ax = plt.subplots(figsize=(7,5))
 sns.heatmap(df_mean,square=True,linewidths=0.2,vmin=1,vmax=5,cmap='RdYlGn',ax=ax)
@@ -348,7 +368,7 @@ sns.heatmap(df_median,square=True,linewidths=0.2,vmin=1,vmax=5,cmap='RdYlGn',ax=
 os.chdir('/Users/as822/Library/CloudStorage/Box-Box/!Research/FLXSUS/')
 if savefig: fig.savefig('M_FLNSUS_Longitudinal/All_time_perceptions_median.jpeg',dpi=300,bbox_inches='tight');
 os.chdir(homedir)
-
+sys.exit()
 # =============================================================================
 # Figure 3: Boxen Plot of scores?
 # =============================================================================
