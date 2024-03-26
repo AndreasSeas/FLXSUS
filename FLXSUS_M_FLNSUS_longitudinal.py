@@ -368,7 +368,191 @@ sns.heatmap(df_median,square=True,linewidths=0.2,vmin=1,vmax=5,cmap='RdYlGn',ax=
 os.chdir('/Users/as822/Library/CloudStorage/Box-Box/!Research/FLXSUS/')
 if savefig: fig.savefig('M_FLNSUS_Longitudinal/All_time_perceptions_median.jpeg',dpi=300,bbox_inches='tight');
 os.chdir(homedir)
+
+
+
+# =============================================================================
+# Get Pre/Post for subscores
+# =============================================================================
+def prepost_data(df_pre, df_post, cols):
+    col_names=[i.split(' - ', 1)[1] for i in cols]
+    uid_pre=set(df_pre['Unique ID']);
+    uid_post=set(df_post['Unique ID']);
+
+    uid_all=list(uid_pre.intersection(uid_post))
+    uid_all.sort()
+
+    df_pre_uid=df_pre.loc[df_pre['Unique ID'].isin(uid_all),['Unique ID']+cols];
+    df_pre_uid=df_pre_uid.set_index(df_pre_uid['Unique ID']).sort_index();
+    df_post_uid=df_post.loc[df_post['Unique ID'].isin(uid_all),['Unique ID']+cols];
+    df_post_uid=df_post_uid.set_index(df_post_uid['Unique ID']).sort_index();
+
+    df_pre_uid=df_pre_uid.replace({'Strongly agree': 5, 
+                                   'Somewhat agree': 4,
+                                   'Neither agree nor disagree': 3,
+                                   'Somewhat disagree': 2,
+                                   'Strongly disagree': 1,})
+
+    df_post_uid=df_post_uid.replace({'Strongly agree': 5, 
+                                   'Somewhat agree': 4,
+                                   'Neither agree nor disagree': 3,
+                                   'Somewhat disagree': 2,
+                                   'Strongly disagree': 1,})
+
+    pre, post=df_pre_uid.align(df_post_uid,join="outer",axis=None)
+    
+    
+    
+    return col_names, pre, post, df_pre_uid
+
+# colset
+col_neuro=['Select your level of agreement for the following statements - I can become a neurosurgeon',
+             'Select your level of agreement for the following statements - I have the ability to shadow neurosurgical procedures',
+             'Select your level of agreement for the following statements - I am familiar with the career pathway to become a neurosurgeon',
+             'Select your level of agreement for the following statements - I have the institutional support and resources to become a neurosurgeon',
+             'Select your level of agreement for the following statements - I am connected to mentors that can help me become a neurosurgeon',
+             'Select your level of agreement for the following statements - I know the day-to-day responsibilities of a neurosurgeon',
+             'Select your level of agreement for the following statements - I can list at least three subspecialties of neurosurgery',
+             'Select your level of agreement for the following statements - Neurosurgery is a good field for minorities and women',
+             'Select your level of agreement for the following statements - I have seen or met a Woman neurosurgeon',
+             'Select your level of agreement for the following statements - I have seen or met a Black neurosurgeon',
+             'Select your level of agreement for the following statements - I have seen or met a Latinx neurosurgeon',
+             'Select your level of agreement for the following statements - Neurosurgeons are intimidating',
+             'Select your level of agreement for the following statements - Neurosurgeons have a good work-life balance',
+             'Select your level of agreement for the following statements - Neurosurgeons have reasonable work hours',
+             "Select your level of agreement for the following statements - Neurosurgeons improve their patients' quality of life",]
+
+
+col_setid=['abilities',
+           'abilities',
+           'knowledge',
+           'support',
+           'support',
+           'knowledge',
+           'knowledge',
+           'diversity',
+           'diversity',
+           'diversity',
+           'diversity',
+           'na',
+           'field',
+           'field',
+           'field',];
+
+subscore_names=['abilities', 'diversity', 'field', 'knowledge', 'support'];
+
+prepresets=[pre21,pre22,]
+presets=[post21,post22,]
+postsets=[pre22,pre23,];
+set_names=['2021-2022','2022-2023'];
+
+### way to do it, combining them all 
+
+fig,ax = plt.subplots(nrows=2,ncols=5,sharey=True,sharex=True,figsize=(8,4))
+# fig,ax = plt.subplots(nrows=1,ncols=5,sharey=True,sharex=True,figsize=(8,2))
+
+import scipy.stats
+
+def mean_confidence_interval(data, confidence=0.95):
+    a = 1.0 * np.array(data)
+    n = len(a)
+    m, se = np.mean(a), scipy.stats.sem(a)
+    h = se * scipy.stats.t.ppf((1 + confidence) / 2., n-1)
+    return m, m-h, m+h
+
+for i,name in enumerate(set_names):
+    
+    _, _, _, pre_all= prepost_data(prepresets[i], presets[i], col_neuro)
+    col_names, pre, post, _= prepost_data(presets[i], postsets[i], col_neuro)
+    
+    for j,subname in enumerate(subscore_names):
+        
+        axs=ax[i][j]
+        
+        idx_set=[i for i, x in enumerate(col_setid) if x==subname]
+        
+        preval=pre.iloc[:,np.array(idx_set)+1].sum(axis=1);
+        postval=post.iloc[:,np.array(idx_set)+1].sum(axis=1);
+        
+        maxval=len(idx_set)*5
+        
+        tempdf= pd.DataFrame(data={'UID':pre['Unique ID'],
+                                   'post': preval/maxval,
+                                   'pre': postval/maxval}).melt(id_vars=['UID'],)
+        tempdf['conference']=name;
+        sns.lineplot(x="variable", 
+                      y="value",
+                      hue='conference',
+                      seed=1,
+                      palette=[palette_wong[i]],
+                      data=tempdf,
+                      ax=axs,
+                      err_style="bars",
+                      markers=True,
+                      ci=95,
+                      err_kws={'capsize':3},
+                      legend=None)
+        
+        data=pre_all.iloc[:,np.array(idx_set)+1].sum(axis=1)
+        
+        m,mm,mp=mean_confidence_interval(data/maxval, confidence=0.95);
+        
+        # axs.plot([0,1],[mp,mp],c=palette_wong[i])
+        # axs.plot([0,1],[mm,mm],c=palette_wong[i])
+        
+        axs.fill_between([0,1], [mp,mp], [mm,mm],color=palette_wong[i],alpha=0.2)
+        
+        # ax[j].get_legend().set_visible(False)
+        p = pg.wilcoxon(preval, postval, alternative='two-sided')
+        
+        # p2 = pg.wilcoxon(preval, pre_all, alternative='two-sided')
+        # p3 = pg.wilcoxon(preval, pre_all, alternative='two-sided')
+        
+        if p['p-val'][0]>=0.05:
+            pstr='ns';
+        elif p['p-val'][0]>0.01:
+            pstr='*';
+        elif p['p-val'][0]>0.001:
+            pstr='**';
+        else:
+            pstr='***';
+            
+        # axs.text(0.5,0.3-i/10,"p = {:.1e}".format(p['p-val'][0]),ha='center',fontsize=10,c = palette_wong[i])
+        axs.text(0.5,1-i/10,pstr,ha='center',fontsize=10,c = palette_wong[i],fontweight='bold')
+        axs.set_ylabel(name,fontsize=12)
+        if j==0 & i==1:
+            axs.set_ylabel(name,fontsize=12)
+            # axs.legend()
+            
+        if i==0:
+            axs.set_title(subname,fontsize=12)
+
+axs.set_xlim(-0.2,1.2)
+axs.set_ylim(0,1.1)
+
+os.chdir('/Users/as822/Library/CloudStorage/Box-Box/!Research/FLXSUS/')
+if savefig: fig.savefig('M_FLNSUS_Longitudinal/postpre_compressed.jpeg',dpi=300,bbox_inches='tight');
+os.chdir(homedir)
+
+
+
 sys.exit()
+
+
+
+
+
+
+
+
+###############################################################################
+###############################################################################
+###############################################################################
+###############################################################################
+###############################################################################
+###############################################################################
+
+
 # =============================================================================
 # Figure 3: Boxen Plot of scores?
 # =============================================================================
