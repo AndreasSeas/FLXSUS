@@ -29,7 +29,7 @@ from scipy.stats import chisquare
 # =============================================================================
 # Set init parameters and organize graphics
 # =============================================================================
-savefig=True
+savefig=False
 deprecate = False
 
 plt.rcParams['font.size'] = '12'
